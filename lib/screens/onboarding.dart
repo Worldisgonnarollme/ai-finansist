@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import '../app_state.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_gradients.dart';
+import '../core/theme/app_shadows.dart';
 import '../core/theme/app_text_styles.dart';
 import '../core/theme/app_theme.dart';
 
@@ -208,13 +209,7 @@ class _CtaButton extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: AppGradients.primary,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accent.withValues(alpha: 0.25),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        boxShadow: AppShadows.glow,
       ),
       child: Material(
         color: Colors.transparent,
@@ -544,13 +539,7 @@ class _IllustrationZone extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: AppGradients.primary,
                 borderRadius: BorderRadius.circular(large ? 40 : 36),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.accent.withValues(alpha: 0.30),
-                    blurRadius: 40,
-                    offset: const Offset(0, 14),
-                  ),
-                ],
+                boxShadow: AppShadows.glow,
               ),
               child: Icon(
                 icon,
@@ -604,13 +593,7 @@ class _FloatCard extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.accent.withValues(alpha: 0.12)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accent.withValues(alpha: 0.10),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppShadows.glowSoft,
       ),
       child: child,
     );

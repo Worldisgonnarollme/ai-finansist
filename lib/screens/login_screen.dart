@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../app_state.dart';
 import '../auth/user_repository.dart';
 import '../core/theme/app_colors.dart';
+import '../core/theme/app_shadows.dart';
 import '../core/theme/app_text_styles.dart';
 import '../core/theme/app_theme.dart';
 import '../widgets/responsive_page.dart';
@@ -515,13 +516,7 @@ class _Badge extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.accent,
           shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accent.withValues(alpha: 0.25),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          boxShadow: AppShadows.glow,
         ),
         child: const Icon(
           Icons.calculate_rounded,
