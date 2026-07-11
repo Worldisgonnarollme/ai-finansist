@@ -6,6 +6,7 @@ import '../core/theme/app_colors.dart';
 import '../core/theme/app_text_styles.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/empty_state.dart';
+import '../core/widgets/hover_cursor.dart';
 import '../main.dart';
 import '../models/tax_period.dart';
 import '../widgets/responsive_page.dart';
@@ -52,7 +53,8 @@ class HistoryScreen extends StatelessWidget {
                       EmptyState(
                         icon: Icons.history_rounded,
                         title: 'Нет данных',
-                        subtitle: 'Подключите банк или добавьте\nоперации вручную',
+                        subtitle:
+                            'Подключите банк или добавьте\nоперации вручную',
                         action: FilledButton.icon(
                           onPressed: () =>
                               Navigator.pushNamed(context, '/add-tx'),
@@ -110,83 +112,85 @@ class _PeriodCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.sp16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    period.name,
-                    style: AppTextStyles.titleMedium.copyWith(
-                      fontWeight: FontWeight.w700,
+    return HoverCursor(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.sp16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      period.name,
+                      style: AppTextStyles.titleMedium.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                ),
-                Text(
-                  '${period.transactionCount} опер.',
-                  style: AppTextStyles.labelSmall,
-                ),
-                const SizedBox(width: AppSpacing.sp4),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.textSecondary,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sp16),
-            Row(
-              children: [
-                Flexible(
-                  child: _Stat(
-                    label: 'Налог',
-                    value: period.tax.rub,
-                    color: AppColors.warning,
+                  Text(
+                    '${period.transactionCount} опер.',
+                    style: AppTextStyles.labelSmall,
                   ),
-                ),
-                if (period.insurance > 0) ...[
-                  const SizedBox(width: AppSpacing.sp24),
-                  // Взносы — отдельный от налога обязательный платёж,
-                  // поэтому отдельная колонка, а не часть суммы налога.
+                  const SizedBox(width: AppSpacing.sp4),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sp16),
+              Row(
+                children: [
                   Flexible(
                     child: _Stat(
-                      label: 'Взносы',
-                      value: period.insurance.rub,
-                      color: AppColors.textPrimary,
+                      label: 'Налог',
+                      value: period.tax.rub,
+                      color: AppColors.warning,
+                    ),
+                  ),
+                  if (period.insurance > 0) ...[
+                    const SizedBox(width: AppSpacing.sp24),
+                    // Взносы — отдельный от налога обязательный платёж,
+                    // поэтому отдельная колонка, а не часть суммы налога.
+                    Flexible(
+                      child: _Stat(
+                        label: 'Взносы',
+                        value: period.insurance.rub,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                  const Spacer(),
+                  Flexible(
+                    child: _Stat(
+                      label: 'Доход',
+                      value: period.income.rub,
+                      color: AppColors.positive,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sp24),
+                  Flexible(
+                    child: _Stat(
+                      label: 'Расход',
+                      value: period.expenses.rub,
+                      color: AppColors.warning,
                     ),
                   ),
                 ],
-                const Spacer(),
-                Flexible(
-                  child: _Stat(
-                    label: 'Доход',
-                    value: period.income.rub,
-                    color: AppColors.positive,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sp24),
-                Flexible(
-                  child: _Stat(
-                    label: 'Расход',
-                    value: period.expenses.rub,
-                    color: AppColors.warning,
-                  ),
-                ),
+              ),
+              if (period.income > 0) ...[
+                const SizedBox(height: AppSpacing.sp16),
+                _TaxRatioBar(income: period.income, tax: period.tax),
               ],
-            ),
-            if (period.income > 0) ...[
-              const SizedBox(height: AppSpacing.sp16),
-              _TaxRatioBar(income: period.income, tax: period.tax),
             ],
-          ],
+          ),
         ),
       ),
     );
