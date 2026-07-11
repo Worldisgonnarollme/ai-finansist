@@ -7,6 +7,7 @@ import '../models/bank_statement.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_text_styles.dart';
 import '../core/theme/app_theme.dart';
+import '../core/widgets/empty_state.dart';
 import '../main.dart';
 import '../widgets/responsive_page.dart';
 
@@ -115,7 +116,19 @@ class StatementsScreen extends StatelessWidget {
                     AppSpacing.sp16,
                     bottomPadding,
                   ),
-                  children: const [_Empty()],
+                  children: [
+                    EmptyState(
+                      icon: Icons.description_outlined,
+                      title: 'Нет загруженных выписок',
+                      subtitle:
+                          'Загрузите CSV или PDF-выписку из банка,\nчтобы увидеть операции и налог',
+                      action: FilledButton.icon(
+                        onPressed: () => _pickFile(context),
+                        icon: const Icon(Icons.upload_file_rounded),
+                        label: const Text('Загрузить выписку'),
+                      ),
+                    ),
+                  ],
                 )
               : ListView.separated(
                   padding: EdgeInsets.fromLTRB(
@@ -131,44 +144,6 @@ class StatementsScreen extends StatelessWidget {
                       _StatementCard(statement: statements[i]),
                 ),
         ),
-      ),
-    );
-  }
-}
-
-class _Empty extends StatelessWidget {
-  const _Empty();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sp48),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.description_outlined,
-            size: 48,
-            color: AppColors.textSecondary,
-          ),
-          const SizedBox(height: AppSpacing.sp16),
-          Text(
-            'Нет загруженных выписок',
-            style: AppTextStyles.screenTitle,
-          ),
-          const SizedBox(height: AppSpacing.sp8),
-          Text(
-            'Загрузите CSV или PDF-выписку из банка,\nчтобы увидеть операции и налог',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodyMedium,
-          ),
-          const SizedBox(height: AppSpacing.sp24),
-          FilledButton.icon(
-            onPressed: () => _pickFile(context),
-            icon: const Icon(Icons.upload_file_rounded),
-            label: const Text('Загрузить выписку'),
-          ),
-        ],
       ),
     );
   }

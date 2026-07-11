@@ -5,6 +5,7 @@ import '../app_state.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_text_styles.dart';
 import '../core/theme/app_theme.dart';
+import '../core/widgets/empty_state.dart';
 import '../main.dart';
 import '../models/tax_period.dart';
 import '../widgets/responsive_page.dart';
@@ -47,7 +48,19 @@ class HistoryScreen extends StatelessWidget {
                       AppSpacing.sp16,
                       bottomPadding,
                     ),
-                    children: const [_Empty()],
+                    children: [
+                      EmptyState(
+                        icon: Icons.history_rounded,
+                        title: 'Нет данных',
+                        subtitle: 'Подключите банк или добавьте\nоперации вручную',
+                        action: FilledButton.icon(
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/add-tx'),
+                          icon: const Icon(Icons.add_rounded),
+                          label: const Text('Добавить операцию'),
+                        ),
+                      ),
+                    ],
                   )
                 : ListView.separated(
                     padding: EdgeInsets.fromLTRB(
@@ -85,40 +98,6 @@ class HistoryScreen extends StatelessWidget {
                   ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _Empty extends StatelessWidget {
-  const _Empty();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sp48 * 2),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.history_rounded, size: 48, color: AppColors.textSecondary),
-          const SizedBox(height: AppSpacing.sp16),
-          Text(
-            'Нет данных',
-            style: AppTextStyles.screenTitle,
-          ),
-          const SizedBox(height: AppSpacing.sp8),
-          Text(
-            'Подключите банк или добавьте\nоперации вручную',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodyMedium,
-          ),
-          const SizedBox(height: AppSpacing.sp24),
-          FilledButton.icon(
-            onPressed: () => Navigator.pushNamed(context, '/add-tx'),
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Добавить операцию'),
-          ),
-        ],
       ),
     );
   }
