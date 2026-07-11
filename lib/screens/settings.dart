@@ -1,68 +1,39 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../app_state.dart';
 import '../models/tax_mode.dart';
-import '../models/bank.dart';
+import '../core/theme/app_colors.dart';
+import '../core/theme/app_text_styles.dart';
+import '../core/theme/app_theme.dart';
+import '../widgets/settings_section.dart';
+import '../widgets/responsive_page.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
-  @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends State<SettingsScreen> {
-  late TextEditingController _nameCtrl;
-  late TextEditingController _apiCtrl;
-  bool _apiVisible = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameCtrl = TextEditingController(text: context.read<AppState>().userName);
-    _apiCtrl = TextEditingController(text: '');
-  }
-
-  @override
-  void dispose() {
-    _nameCtrl.dispose();
-    _apiCtrl.dispose();
-    super.dispose();
-  }
-
-  void _saveName() {
-    context.read<AppState>().setUserName(_nameCtrl.text.trim());
-    FocusScope.of(context).unfocus();
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Имя сохранено')));
-  }
-
-  void _saveApiKey() {
-    context.read<AppState>().setApiKey(_apiCtrl.text.trim());
-    FocusScope.of(context).unfocus();
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('API ключ сохранён')));
-  }
-
-  void _clearData() {
+  void _clearData(BuildContext context) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Сбросить данные?'),
-        content: const Text(
-            'Все операции, подключённые банки и настройки будут удалены.'),
+        backgroundColor: AppColors.surface,
+        title: Text('Сбросить данные?', style: AppTextStyles.titleMedium),
+        content: Text(
+          'Все операции, подключённые банки и настройки будут удалены.',
+          style: AppTextStyles.bodyMedium,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Отмена'),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: AppColors.negative),
             onPressed: () {
               context.read<AppState>().clearData();
               Navigator.pop(context);
-              Navigator.pushNamedAndRemoveUntil(
-                  context, '/', (_) => false);
+              Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
             },
             child: const Text('Сбросить'),
           ),
@@ -74,285 +45,254 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final scheme = Theme.of(context).colorScheme;
+    // См. комментарий в history.dart — тот же расчёт нижнего отступа под
+    // плавающую пилюлю на мобильной ветке, статичный на десктопе.
+    final isDesktop =
+        MediaQuery.sizeOf(context).width >= AppBreakpoints.desktop;
+    final bottomPadding = isDesktop
+        ? AppSpacing.sp32
+        : MediaQuery.paddingOf(context).bottom + AppSpacing.sp16;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Настройки'), centerTitle: false),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-        children: [
-          // ── Appearance ──────────────────────────────────────────────────
-          _Section(title: 'Оформление', children: [
-            Row(
-              children: [
-                Icon(Icons.dark_mode_rounded,
-                    size: 20, color: scheme.onSurfaceVariant),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text('Тёмная тема',
-                      style: TextStyle(
-                          color: scheme.onSurface, fontWeight: FontWeight.w500)),
-                ),
-                Switch(
-                  value: state.isDark,
-                  onChanged: (_) => state.toggleTheme(),
-                  activeColor: scheme.primary,
-                  activeTrackColor: scheme.primaryContainer,
-                ),
-              ],
+      appBar: AppBar(title: const Text('Настройки')),
+      body: SafeArea(
+        bottom: false,
+        child: ResponsivePage(
+          maxWidth: 560,
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.sp16,
+              AppSpacing.sp8,
+              AppSpacing.sp16,
+              bottomPadding,
             ),
-          ]),
-          const SizedBox(height: 20),
-
-          // ── Profile ─────────────────────────────────────────────────────
-          _Section(title: 'Профиль', children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _nameCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Ваше имя',
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            children: [
+              // Статичная сводка профиля — только отображение, без
+              // редактирования. Читает те же поля AppState, что и
+              // ProfileScreen, поэтому автоматически синхронизирована с
+              // ним и с данными, подставленными при регистрации в
+              // LoginScreen (см. AppState.setEmail/setPhoneNumber и т.д.
+              // notifyListeners() перестраивает этот экран сразу же).
+              _ProfileSummaryCard(state: state),
+              const SizedBox(height: AppSpacing.sp16),
+              SettingsSection(
+                title: 'Аккаунт',
+                children: [
+                  SettingsRow(
+                    child: _MenuRow(
+                      icon: Icons.person_outline_rounded,
+                      title: 'Изменить данные профиля',
+                      value: state.userName.isNotEmpty
+                          ? state.userName
+                          : 'Не указано',
+                      onTap: () => Navigator.pushNamed(context, '/profile'),
                     ),
                   ),
+                  SettingsRow(
+                    child: _MenuRow(
+                      icon: Icons.receipt_long_outlined,
+                      title: 'Налоговый режим',
+                      value: state.taxMode.shortName,
+                      onTap: () => Navigator.pushNamed(context, '/tax-regime'),
+                    ),
+                  ),
+                  SettingsRow(
+                    child: _MenuRow(
+                      icon: Icons.account_balance_outlined,
+                      title: 'Подключённые банки',
+                      value: state.connectedBanks.isEmpty
+                          ? 'Не подключены'
+                          : '${state.connectedBanks.length}',
+                      onTap: () => Navigator.pushNamed(context, '/banks'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sp32),
+              OutlinedButton(
+                onPressed: () => _clearData(context),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.negative,
+                  side: const BorderSide(color: AppColors.negative),
                 ),
-                const SizedBox(width: 12),
-                IconButton.filled(
-                  onPressed: _saveName,
-                  icon: const Icon(Icons.check_rounded),
-                ),
-              ],
-            ),
-          ]),
-          const SizedBox(height: 20),
+                child: const Text('Сбросить данные'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
-          // ── Tax mode ────────────────────────────────────────────────────
-          _Section(title: 'Налоговый режим', children: [
-            _ModeSelector(
-              selected: state.taxMode,
-              onChanged: context.read<AppState>().setTaxMode,
-            ),
-          ]),
-          const SizedBox(height: 20),
+// Только для чтения: зеркало данных профиля (см. ProfileScreen) на
+// экране "Настройки". Редактирование — по кнопке "Изменить данные
+// профиля" ниже, которая ведёт на ProfileScreen.
+class _ProfileSummaryCard extends StatelessWidget {
+  final AppState state;
+  const _ProfileSummaryCard({required this.state});
 
-          // ── Banks ───────────────────────────────────────────────────────
-          _Section(title: 'Подключённые банки', children: [
-            if (state.connectedBanks.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text('Нет подключённых банков',
-                    style: TextStyle(color: scheme.onSurfaceVariant)),
-              )
-            else
-              for (final bank in state.connectedBanks)
-                _BankRow(
-                  bank: bank,
-                  onDisconnect: () =>
-                      context.read<AppState>().disconnectBank(bank.bankId),
-                ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.pushNamed(context, '/bank-select'),
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text('Добавить банк'),
-              style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(44)),
-            ),
-          ]),
-          const SizedBox(height: 20),
+  @override
+  Widget build(BuildContext context) {
+    final contactParts = [
+      if (state.email.isNotEmpty) state.email,
+      if (state.phoneNumber.isNotEmpty) state.phoneNumber,
+    ];
+    final hasDetails =
+        state.region.isNotEmpty ||
+        state.activityType.isNotEmpty ||
+        state.inn.isNotEmpty ||
+        state.ogrnip.isNotEmpty;
 
-          // ── AI ──────────────────────────────────────────────────────────
-          _Section(title: 'AI классификация', children: [
-            Text(
-              'API ключ Anthropic (Claude) для умной классификации операций. '
-              'Без ключа используется базовая классификация.',
-              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _apiCtrl,
-              obscureText: !_apiVisible,
-              decoration: InputDecoration(
-                hintText: 'sk-ant-...',
-                suffixIcon: IconButton(
-                  icon: Icon(_apiVisible
-                      ? Icons.visibility_off
-                      : Icons.visibility),
-                  onPressed: () =>
-                      setState(() => _apiVisible = !_apiVisible),
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sp16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.divider),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _SummaryAvatar(base64: state.avatarBase64),
+              const SizedBox(width: AppSpacing.sp12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      state.userName.isNotEmpty
+                          ? state.userName
+                          : 'Пользователь',
+                      style: AppTextStyles.titleMedium.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      contactParts.isEmpty
+                          ? 'Данные не заполнены'
+                          : contactParts.join(' · '),
+                      style: AppTextStyles.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: _saveApiKey,
-              style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(44)),
-              child: const Text('Сохранить ключ'),
-            ),
-          ]),
-          const SizedBox(height: 32),
-
-          // ── Reset ───────────────────────────────────────────────────────
-          OutlinedButton.icon(
-            onPressed: _clearData,
-            icon: const Icon(Icons.delete_outline_rounded,
-                color: Colors.red, size: 20),
-            label: const Text('Сбросить данные',
-                style: TextStyle(color: Colors.red)),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-              side: const BorderSide(color: Colors.red),
-            ),
+            ],
           ),
-          const SizedBox(height: 24),
+          if (hasDetails) ...[
+            const SizedBox(height: AppSpacing.sp16),
+            Container(height: 1, color: AppColors.dividerSoft),
+            const SizedBox(height: AppSpacing.sp12),
+            if (state.region.isNotEmpty)
+              _InfoRow(label: 'Регион', value: state.region),
+            if (state.activityType.isNotEmpty)
+              _InfoRow(label: 'Вид деятельности', value: state.activityType),
+            if (state.inn.isNotEmpty) _InfoRow(label: 'ИНН', value: state.inn),
+            if (state.ogrnip.isNotEmpty)
+              _InfoRow(label: 'ОГРНИП', value: state.ogrnip),
+          ],
         ],
       ),
     );
   }
 }
 
-class _Section extends StatelessWidget {
-  final String title;
-  final List<Widget> children;
-  const _Section({required this.title, required this.children});
+class _SummaryAvatar extends StatelessWidget {
+  final String base64;
+  const _SummaryAvatar({required this.base64});
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 10),
-          child: Text(
-            title.toUpperCase(),
-            style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 11,
-                letterSpacing: 1.2,
-                color: scheme.onSurfaceVariant),
-          ),
-        ),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: children,
-            ),
-          ),
-        ),
-      ],
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: const BoxDecoration(
+        color: AppColors.accentSoft,
+        shape: BoxShape.circle,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: base64.isEmpty
+          ? const Icon(Icons.person_rounded, size: 26, color: AppColors.accent)
+          : Image.memory(base64Decode(base64), fit: BoxFit.cover),
     );
   }
 }
 
-class _ModeSelector extends StatelessWidget {
-  final TaxMode selected;
-  final ValueChanged<TaxMode> onChanged;
-  const _ModeSelector({required this.selected, required this.onChanged});
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _InfoRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Column(
-      children: TaxMode.values.map((mode) {
-        final active = mode == selected;
-        return GestureDetector(
-          onTap: () => onChanged(mode),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            margin: const EdgeInsets.only(bottom: 8),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-            decoration: BoxDecoration(
-              color: active
-                  ? scheme.primaryContainer
-                  : scheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: active ? scheme.primary : scheme.outline,
-                width: active ? 1.5 : 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: active ? scheme.primary : Colors.transparent,
-                    border: Border.all(
-                      color: active ? scheme.primary : scheme.onSurfaceVariant,
-                      width: 2,
-                    ),
-                  ),
-                  child: active
-                      ? const Icon(Icons.check, size: 12, color: Colors.white)
-                      : null,
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(mode.displayName,
-                        style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: active
-                                ? scheme.onPrimaryContainer
-                                : scheme.onSurface)),
-                    Text(mode.description,
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: scheme.onSurfaceVariant)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class _BankRow extends StatelessWidget {
-  final ConnectedBank bank;
-  final VoidCallback onDisconnect;
-  const _BankRow({required this.bank, required this.onDisconnect});
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sp8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: Text(label, style: AppTextStyles.labelSmall)),
+          const SizedBox(width: AppSpacing.sp12),
+          Expanded(
+            flex: 2,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MenuRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final VoidCallback onTap;
+  const _MenuRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: Row(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: scheme.primaryContainer,
-              borderRadius: BorderRadius.circular(8),
+          Icon(icon, size: 20, color: AppColors.textSecondary),
+          const SizedBox(width: AppSpacing.sp12),
+          Expanded(child: Text(title, style: AppTextStyles.titleMedium)),
+          const SizedBox(width: AppSpacing.sp12),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 160),
+            child: Text(
+              value,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
             ),
-            child: Icon(Icons.account_balance_rounded,
-                size: 18, color: scheme.primary),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(bank.bankName,
-                style: TextStyle(
-                    fontWeight: FontWeight.w500, color: scheme.onSurface)),
-          ),
-          TextButton(
-            onPressed: onDisconnect,
-            style: TextButton.styleFrom(foregroundColor: scheme.error),
-            child: const Text('Отключить'),
+          const SizedBox(width: AppSpacing.sp4),
+          const Icon(
+            Icons.chevron_right_rounded,
+            size: 18,
+            color: AppColors.textSecondary,
           ),
         ],
       ),

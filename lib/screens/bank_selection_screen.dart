@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/bank.dart';
+import '../core/theme/app_colors.dart';
+import '../core/theme/app_text_styles.dart';
+import '../core/theme/app_theme.dart';
+import '../widgets/responsive_page.dart';
 
 class BankSelectionScreen extends StatelessWidget {
   const BankSelectionScreen({super.key});
@@ -8,44 +12,58 @@ class BankSelectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Подключение банка'),
+        title: Text(
+          'Подключение банка',
+          style: AppTextStyles.screenTitle,
+        ),
         centerTitle: true,
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        children: [
-          _SecurityBanner(),
-          const SizedBox(height: 16),
-          for (final bank in kSupportedBanks) ...[
-            _BankTile(bank: bank),
-            const SizedBox(height: 10),
+      body: ResponsivePage(
+        maxWidth: 560,
+        child: ListView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sp16,
+            vertical: AppSpacing.sp8,
+          ),
+          children: [
+            const _SecurityBanner(),
+            const SizedBox(height: AppSpacing.sp16),
+            for (final bank in kSupportedBanks) ...[
+              _BankTile(bank: bank),
+              const SizedBox(height: AppSpacing.sp8 + 2),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 }
 
 class _SecurityBanner extends StatelessWidget {
+  const _SecurityBanner();
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sp16,
+        vertical: AppSpacing.sp12,
+      ),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9),
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.accentSoft,
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         children: [
-          const Icon(Icons.lock_rounded, color: Color(0xFF2E7D32), size: 20),
-          const SizedBox(width: 12),
+          const Icon(Icons.lock_rounded, color: AppColors.accent, size: 20),
+          const SizedBox(width: AppSpacing.sp12),
           Expanded(
             child: Text(
               'Мы не храним логины и пароли. Только токен доступа только к выпискам.',
-              style: TextStyle(
-                  color: const Color(0xFF1B5E20),
-                  fontSize: 13,
-                  height: 1.4),
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.accent,
+                height: 1.4,
+              ),
             ),
           ),
         ],
@@ -61,14 +79,14 @@ class _BankTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, '/bank-consent',
-          arguments: bank),
+      onTap: () =>
+          Navigator.pushNamed(context, '/bank-consent', arguments: bank),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.sp16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade100),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.md + 2),
+          border: Border.all(color: AppColors.divider),
         ),
         child: Row(
           children: [
@@ -77,58 +95,69 @@ class _BankTile extends StatelessWidget {
               height: 48,
               decoration: BoxDecoration(
                 color: bank.color,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Center(
                 child: Text(
                   bank.name[0],
-                  style: const TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.w700),
+                  style: AppTextStyles.headlineMedium.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.onAccent,
+                  ),
                 ),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSpacing.sp16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Text(
-                        bank.name,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 16),
+                      Flexible(
+                        child: Text(
+                          bank.name,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       if (bank.isRecommended) ...[
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.sp8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1565C0),
-                            borderRadius: BorderRadius.circular(8),
+                            horizontal: AppSpacing.sp8,
+                            vertical: 2,
                           ),
-                          child: const Text(
+                          decoration: BoxDecoration(
+                            color: AppColors.accent,
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          child: Text(
                             'Рекомендуем',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600),
+                            style: AppTextStyles.labelSmall.copyWith(
+                              letterSpacing: 0,
+                              color: AppColors.onAccent,
+                            ),
                           ),
                         ),
                       ],
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.sp4),
                   Text(
                     'Подключить выписки',
-                    style: TextStyle(
-                        color: Colors.grey.shade600, fontSize: 13),
+                    style: AppTextStyles.bodySmall,
                   ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textTertiary,
+            ),
           ],
         ),
       ),

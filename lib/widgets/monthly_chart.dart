@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../core/theme/app_colors.dart';
+import '../core/theme/app_gradients.dart';
+import '../core/theme/app_text_styles.dart';
+import '../core/theme/app_theme.dart';
 import '../models/month_stat.dart';
 
 class MonthlyChart extends StatefulWidget {
@@ -19,7 +23,9 @@ class _MonthlyChartState extends State<MonthlyChart>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 800));
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
     _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
     Future.delayed(const Duration(milliseconds: 200), () {
       if (mounted) _ctrl.forward();
@@ -34,9 +40,6 @@ class _MonthlyChartState extends State<MonthlyChart>
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final isDark = scheme.brightness == Brightness.dark;
-
     final maxVal = widget.data.fold(0.0, (m, s) {
       final top = s.income > s.expense ? s.income : s.expense;
       return top > m ? top : m;
@@ -46,20 +49,14 @@ class _MonthlyChartState extends State<MonthlyChart>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.only(bottom: AppSpacing.sp16),
           child: Row(
             children: [
-              Text(
-                'Доходы и расходы',
-                style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: scheme.onSurface),
-              ),
+              Text('Доходы и расходы', style: AppTextStyles.titleMedium),
               const Spacer(),
-              _Legend(color: scheme.primary, label: 'Доход'),
-              const SizedBox(width: 14),
-              _Legend(color: scheme.error, label: 'Расход'),
+              const _Legend(color: AppColors.positive, label: 'Доход'),
+              const SizedBox(width: AppSpacing.sp12),
+              const _Legend(color: AppColors.warningLight, label: 'Расход'),
             ],
           ),
         ),
@@ -73,36 +70,45 @@ class _MonthlyChartState extends State<MonthlyChart>
                 minY: 0,
                 barTouchData: BarTouchData(
                   touchTooltipData: BarTouchTooltipData(
-                    getTooltipColor: (_) =>
-                        isDark ? const Color(0xFF1D2D45) : Colors.white,
+                    getTooltipColor: (_) => AppColors.surfaceAlt,
                     getTooltipItem: (group, gi, rod, ri) {
                       final stat = widget.data[group.x];
                       final isIncome = ri == 0;
                       final val = isIncome ? stat.income : stat.expense;
                       final label = isIncome ? 'Доход' : 'Расход';
-                      final s = val.toStringAsFixed(0).replaceAllMapped(
-                          RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-                          (m) => '${m[1]} ');
+                      final s = val
+                          .toStringAsFixed(0)
+                          .replaceAllMapped(
+                            RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+                            (m) => '${m[1]} ',
+                          );
                       return BarTooltipItem(
                         '$label\n$s ₽',
-                        TextStyle(
-                            color: isIncome ? scheme.primary : scheme.error,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600),
+                        AppTextStyles.labelSmall.copyWith(
+                          color: isIncome
+                              ? AppColors.positive
+                              : AppColors.negative,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0,
+                        ),
                       );
                     },
                   ),
                 ),
                 titlesData: FlTitlesData(
-                  leftTitles:
-                      const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles:
-                      const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles:
-                      const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
+                      reservedSize: 40,
                       getTitlesWidget: (v, _) {
                         final idx = v.toInt();
                         if (idx < 0 || idx >= widget.data.length) {
@@ -110,16 +116,41 @@ class _MonthlyChartState extends State<MonthlyChart>
                         }
                         final m = widget.data[idx].month;
                         const abbr = [
-                          'янв', 'фев', 'мар', 'апр', 'май', 'июн',
-                          'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'
+                          'янв',
+                          'фев',
+                          'мар',
+                          'апр',
+                          'май',
+                          'июн',
+                          'июл',
+                          'авг',
+                          'сен',
+                          'окт',
+                          'ноя',
+                          'дек',
                         ];
+                        // Год показываем только на первом столбце и при
+                        // переходе через границу года — без дублирования
+                        final showYear =
+                            idx == 0 ||
+                            widget.data[idx - 1].month.year != m.year;
                         return Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(
-                            abbr[m.month - 1],
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: scheme.onSurfaceVariant),
+                          padding: const EdgeInsets.only(top: AppSpacing.sp8),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                abbr[m.month - 1],
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  letterSpacing: 0,
+                                ),
+                              ),
+                              if (showYear)
+                                Text(
+                                  '${m.year}',
+                                  style: AppTextStyles.overline,
+                                ),
+                            ],
                           ),
                         );
                       },
@@ -131,7 +162,7 @@ class _MonthlyChartState extends State<MonthlyChart>
                   drawVerticalLine: false,
                   horizontalInterval: maxVal > 0 ? maxVal / 4 : 2500,
                   getDrawingHorizontalLine: (_) => FlLine(
-                    color: scheme.outline.withValues(alpha: 0.5),
+                    color: AppColors.divider,
                     strokeWidth: 1,
                     dashArray: [4, 4],
                   ),
@@ -144,17 +175,19 @@ class _MonthlyChartState extends State<MonthlyChart>
                     barRods: [
                       BarChartRodData(
                         toY: s.income * _anim.value,
-                        color: scheme.primary,
+                        gradient: AppGradients.chart,
                         width: 10,
                         borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(4)),
+                          top: Radius.circular(4),
+                        ),
                       ),
                       BarChartRodData(
                         toY: s.expense * _anim.value,
-                        color: scheme.error,
+                        color: AppColors.warningLight,
                         width: 10,
                         borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(4)),
+                          top: Radius.circular(4),
+                        ),
                       ),
                     ],
                     barsSpace: 4,
@@ -187,13 +220,8 @@ class _Legend extends StatelessWidget {
             borderRadius: BorderRadius.circular(3),
           ),
         ),
-        const SizedBox(width: 5),
-        Text(
-          label,
-          style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurfaceVariant),
-        ),
+        const SizedBox(width: AppSpacing.sp4 + 1),
+        Text(label, style: AppTextStyles.labelSmall),
       ],
     );
   }
