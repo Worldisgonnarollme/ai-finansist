@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 
 import '../app_state.dart';
@@ -195,12 +196,37 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await _userRepository.signInWithGoogle();
       _goToTaxMode();
+    } on GoogleSignInException catch (e) {
+      // Пользователь просто закрыл системный выбор аккаунта — это не
+      // ошибка, ничего не показываем (как при закрытии попапа на вебе).
+      if (e.code != GoogleSignInExceptionCode.canceled) {
+        setState(
+          () => _error = 'Не удалось войти через Google. Попробуйте ещё раз.',
+        );
+      }
     } on FirebaseAuthException catch (e) {
       setState(() => _error = _messageFor(e.code));
     } catch (_) {
       setState(
         () => _error = 'Не удалось войти через Google. Попробуйте ещё раз.',
       );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _continueAsGuest() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await _userRepository.signInAnonymously();
+      _goToTaxMode();
+    } on FirebaseAuthException catch (e) {
+      setState(() => _error = _messageFor(e.code));
+    } catch (_) {
+      setState(() => _error = 'Не удалось войти. Попробуйте ещё раз.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -353,6 +379,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: AppSpacing.sp12),
                   _buildFooterLink(),
+                  const SizedBox(height: AppSpacing.sp4),
+                  Center(
+                    child: TextButton(
+                      onPressed: _loading ? null : _continueAsGuest,
+                      child: const Text('Продолжить без регистрации'),
+                    ),
+                  ),
                 ],
               ),
             ),

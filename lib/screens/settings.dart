@@ -1,18 +1,37 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../app_state.dart';
-import '../models/tax_mode.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_text_styles.dart';
 import '../core/theme/app_theme.dart';
-import '../core/widgets/hover_cursor.dart';
-import '../widgets/settings_section.dart';
-import '../widgets/responsive_page.dart';
+import '../features/settings/widgets/settings_callout.dart';
+import '../features/settings/widgets/settings_danger_zone.dart';
+import '../features/settings/widgets/settings_group.dart';
+import '../features/settings/widgets/settings_profile_hero.dart';
+import '../features/settings/widgets/settings_row.dart';
+import '../features/settings/widgets/settings_toggle.dart';
+import '../models/tax_mode.dart';
+import 'statements_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
+/// Настройки — точно по эталонам docs/design/settings_desktop_concept.html
+/// (≥1000 по ширине контента) и settings_mobile_concept.html (<1000).
+/// Брейкпоинт считается от констрейнтов ЭТОГО экрана (не всего окна) —
+/// на широком десктопе main_screen.dart уже занял 260px под сайдбар,
+/// поэтому здесь сравнивается именно оставшаяся ширина контента.
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  // Локальные тумблеры — в приложении нет backend-хранилища для
+  // уведомлений (аналогично декоративному колокольчику на дашборде),
+  // поэтому состояние не персистится между запусками.
+  bool _remindersOn = true;
+  bool _digestOn = false;
 
   void _clearData(BuildContext context) {
     showDialog(
@@ -30,7 +49,7 @@ class SettingsScreen extends StatelessWidget {
             child: const Text('Отмена'),
           ),
           TextButton(
-            style: TextButton.styleFrom(foregroundColor: AppColors.negative),
+            style: TextButton.styleFrom(foregroundColor: AppColors.onbDanger),
             onPressed: () {
               context.read<AppState>().clearData();
               Navigator.pop(context);
@@ -43,264 +62,249 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  String _banksCountLabel(int n) {
+    final mod100 = n % 100;
+    final mod10 = n % 10;
+    final word = (mod100 >= 11 && mod100 <= 14)
+        ? 'банков'
+        : switch (mod10) {
+            1 => 'банк',
+            2 || 3 || 4 => 'банка',
+            _ => 'банков',
+          };
+    return '$n $word';
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    // См. комментарий в history.dart — тот же расчёт нижнего отступа под
-    // плавающую пилюлю на мобильной ветке, статичный на десктопе.
-    final isDesktop =
-        MediaQuery.sizeOf(context).width >= AppBreakpoints.desktop;
-    final bottomPadding = isDesktop
-        ? AppSpacing.sp32
-        : MediaQuery.paddingOf(context).bottom + AppSpacing.sp16;
+    final banksConnected = state.connectedBanks.isNotEmpty;
+    final statementsCount = state.statements.length;
+    final totalTx = state.statements.fold<int>(0, (sum, s) => sum + s.transactionCount);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Настройки')),
+      backgroundColor: AppColors.onbBg,
       body: SafeArea(
-        bottom: false,
-        child: ResponsivePage(
-          maxWidth: 560,
-          child: ListView(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.sp16,
-              AppSpacing.sp8,
-              AppSpacing.sp16,
-              bottomPadding,
-            ),
-            children: [
-              // Статичная сводка профиля — только отображение, без
-              // редактирования. Читает те же поля AppState, что и
-              // ProfileScreen, поэтому автоматически синхронизирована с
-              // ним и с данными, подставленными при регистрации в
-              // LoginScreen (см. AppState.setEmail/setPhoneNumber и т.д.
-              // notifyListeners() перестраивает этот экран сразу же).
-              _ProfileSummaryCard(state: state),
-              const SizedBox(height: AppSpacing.sp16),
-              SettingsSection(
-                title: 'Аккаунт',
-                children: [
-                  SettingsRow(
-                    child: _MenuRow(
-                      icon: Icons.person_outline_rounded,
-                      title: 'Изменить данные профиля',
-                      value: state.userName.isNotEmpty
-                          ? state.userName
-                          : 'Не указано',
-                      onTap: () => Navigator.pushNamed(context, '/profile'),
-                    ),
-                  ),
-                  SettingsRow(
-                    child: _MenuRow(
-                      icon: Icons.receipt_long_outlined,
-                      title: 'Налоговый режим',
-                      value: state.taxMode.shortName,
-                      onTap: () => Navigator.pushNamed(context, '/tax-regime'),
-                    ),
-                  ),
-                  SettingsRow(
-                    child: _MenuRow(
-                      icon: Icons.account_balance_outlined,
-                      title: 'Подключённые банки',
-                      value: state.connectedBanks.isEmpty
-                          ? 'Не подключены'
-                          : '${state.connectedBanks.length}',
-                      onTap: () => Navigator.pushNamed(context, '/banks'),
-                    ),
-                  ),
-                ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 1000;
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                compact ? AppSpacing.sp20 : AppSpacing.sp48,
+                compact ? AppSpacing.sp16 + 2 : AppSpacing.sp32 + 4,
+                compact ? AppSpacing.sp20 : AppSpacing.sp48,
+                compact ? AppSpacing.sp32 + AppSpacing.sp48 : AppSpacing.sp48 + AppSpacing.sp16,
               ),
-              const SizedBox(height: AppSpacing.sp32),
-              OutlinedButton(
-                onPressed: () => _clearData(context),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.negative,
-                  side: const BorderSide(color: AppColors.negative),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1040),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _Pagehead(compact: compact),
+                      SizedBox(height: compact ? AppSpacing.sp16 - 2 : AppSpacing.sp24),
+                      SettingsProfileHero(
+                        avatarBase64: state.avatarBase64,
+                        name: state.userName,
+                        email: state.email,
+                        taxModeLabel: state.taxMode.shortName,
+                        banksConnected: banksConnected,
+                        compact: compact,
+                        onTap: () => Navigator.pushNamed(context, '/profile'),
+                      ),
+                      SizedBox(height: compact ? AppSpacing.sp16 - 2 : AppSpacing.sp20),
+                      if (!banksConnected) ...[
+                        SettingsCallout(
+                          compact: compact,
+                          onTap: () => Navigator.pushNamed(context, '/bank-select'),
+                        ),
+                        SizedBox(height: compact ? AppSpacing.sp20 + 2 : AppSpacing.sp32 - 4),
+                      ],
+                      _GroupsLayout(
+                        compact: compact,
+                        accountGroup: SettingsGroup(
+                          title: 'Аккаунт',
+                          compact: compact,
+                          rows: [
+                            SettingsRow(
+                              icon: Icons.person_outline_rounded,
+                              title: 'Данные профиля',
+                              subtitle: 'Имя, e-mail, пароль',
+                              compact: compact,
+                              trailing: compact
+                                  ? const SettingsChevron()
+                                  : SettingsValueTrailing(
+                                      value: state.userName.isNotEmpty ? state.userName : 'Не указано',
+                                    ),
+                              onTap: () => Navigator.pushNamed(context, '/profile'),
+                            ),
+                            SettingsRow(
+                              icon: Icons.receipt_long_outlined,
+                              title: 'Налоговый режим',
+                              subtitle: 'Влияет на формулу расчёта',
+                              compact: compact,
+                              trailing: SettingsChipTrailing(label: state.taxMode.shortName),
+                              onTap: () => Navigator.pushNamed(context, '/tax-regime'),
+                            ),
+                            SettingsRow(
+                              icon: Icons.account_balance_outlined,
+                              iconOrange: true,
+                              title: 'Подключённые банки',
+                              subtitle: 'Автоимпорт операций',
+                              compact: compact,
+                              trailing: banksConnected
+                                  ? SettingsChipTrailing(label: _banksCountLabel(state.connectedBanks.length))
+                                  : SettingsChipTrailing(
+                                      label: compact ? 'Нет' : 'Не подключены',
+                                      orange: true,
+                                    ),
+                              onTap: () => Navigator.pushNamed(context, '/banks'),
+                            ),
+                          ],
+                        ),
+                        notificationsGroup: SettingsGroup(
+                          title: 'Уведомления',
+                          compact: compact,
+                          rows: [
+                            SettingsRow(
+                              icon: Icons.alarm_rounded,
+                              title: 'Напоминания о сроках уплаты',
+                              subtitle: 'За 7 и за 1 день',
+                              compact: compact,
+                              trailing: SettingsToggle(value: _remindersOn),
+                              onTap: () => setState(() => _remindersOn = !_remindersOn),
+                            ),
+                            SettingsRow(
+                              icon: Icons.mail_outline_rounded,
+                              title: 'Дайджест на почту',
+                              subtitle: 'Итоги месяца и налог',
+                              compact: compact,
+                              trailing: SettingsToggle(value: _digestOn),
+                              onTap: () => setState(() => _digestOn = !_digestOn),
+                            ),
+                          ],
+                        ),
+                        dataGroup: SettingsGroup(
+                          title: 'Данные',
+                          compact: compact,
+                          rows: [
+                            SettingsRow(
+                              icon: Icons.download_rounded,
+                              title: 'Экспорт операций',
+                              subtitle: 'CSV или Excel',
+                              compact: compact,
+                              trailing: const SettingsChevron(),
+                              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Экспорт скоро будет доступен'),
+                                  backgroundColor: AppColors.surfaceAlt,
+                                ),
+                              ),
+                            ),
+                            SettingsRow(
+                              icon: Icons.folder_outlined,
+                              title: 'Загруженные выписки',
+                              subtitle: statementsCount == 0
+                                  ? 'Пока нет файлов'
+                                  : '$statementsCount файла · $totalTx операций',
+                              compact: compact,
+                              trailing: const SettingsChevron(),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const StatementsScreen()),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: compact ? AppSpacing.sp16 - 2 : AppSpacing.sp20),
+                      SettingsDangerZone(compact: compact, onTap: () => _clearData(context)),
+                    ],
+                  ),
                 ),
-                child: const Text('Сбросить данные'),
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
 }
 
-// Только для чтения: зеркало данных профиля (см. ProfileScreen) на
-// экране "Настройки". Редактирование — по кнопке "Изменить данные
-// профиля" ниже, которая ведёт на ProfileScreen.
-class _ProfileSummaryCard extends StatelessWidget {
-  final AppState state;
-  const _ProfileSummaryCard({required this.state});
+class _Pagehead extends StatelessWidget {
+  final bool compact;
+  const _Pagehead({required this.compact});
 
   @override
   Widget build(BuildContext context) {
-    final contactParts = [
-      if (state.email.isNotEmpty) state.email,
-      if (state.phoneNumber.isNotEmpty) state.phoneNumber,
-    ];
-    final hasDetails =
-        state.region.isNotEmpty ||
-        state.activityType.isNotEmpty ||
-        state.inn.isNotEmpty ||
-        state.ogrnip.isNotEmpty;
+    final title = Text('Настройки', style: compact ? AppTextStyles.settingsH1.copyWith(fontSize: 30) : AppTextStyles.settingsH1);
+    final sub = Text(
+      'Аккаунт, налоговый режим и данные',
+      style: compact ? AppTextStyles.settingsSub.copyWith(fontSize: 13.5) : AppTextStyles.settingsSub,
+    );
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.sp16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.divider),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Column(
+    if (compact) {
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _SummaryAvatar(base64: state.avatarBase64),
-              const SizedBox(width: AppSpacing.sp12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      state.userName.isNotEmpty
-                          ? state.userName
-                          : 'Пользователь',
-                      style: AppTextStyles.titleMedium.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      contactParts.isEmpty
-                          ? 'Данные не заполнены'
-                          : contactParts.join(' · '),
-                      style: AppTextStyles.bodySmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (hasDetails) ...[
-            const SizedBox(height: AppSpacing.sp16),
-            Container(height: 1, color: AppColors.dividerSoft),
-            const SizedBox(height: AppSpacing.sp12),
-            if (state.region.isNotEmpty)
-              _InfoRow(label: 'Регион', value: state.region),
-            if (state.activityType.isNotEmpty)
-              _InfoRow(label: 'Вид деятельности', value: state.activityType),
-            if (state.inn.isNotEmpty) _InfoRow(label: 'ИНН', value: state.inn),
-            if (state.ogrnip.isNotEmpty)
-              _InfoRow(label: 'ОГРНИП', value: state.ogrnip),
-          ],
-        ],
-      ),
+        children: [title, const SizedBox(height: 4), sub],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [title, sub],
     );
   }
 }
 
-class _SummaryAvatar extends StatelessWidget {
-  final String base64;
-  const _SummaryAvatar({required this.base64});
+/// Сетка 2×2(+1) на desktop, одна колонка на mobile — «Данные» вторым
+/// рядом слева на desktop (см. §3 промпта).
+class _GroupsLayout extends StatelessWidget {
+  final bool compact;
+  final Widget accountGroup;
+  final Widget notificationsGroup;
+  final Widget dataGroup;
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 52,
-      height: 52,
-      decoration: const BoxDecoration(
-        color: AppColors.accentSoft,
-        shape: BoxShape.circle,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: base64.isEmpty
-          ? const Icon(Icons.person_rounded, size: 26, color: AppColors.accent)
-          : Image.memory(base64Decode(base64), fit: BoxFit.cover),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _InfoRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sp8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(child: Text(label, style: AppTextStyles.labelSmall)),
-          const SizedBox(width: AppSpacing.sp12),
-          Expanded(
-            flex: 2,
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MenuRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String value;
-  final VoidCallback onTap;
-  const _MenuRow({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.onTap,
+  const _GroupsLayout({
+    required this.compact,
+    required this.accountGroup,
+    required this.notificationsGroup,
+    required this.dataGroup,
   });
 
   @override
   Widget build(BuildContext context) {
-    return HoverCursor(
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Row(
+    if (compact) {
+      return Column(
+        children: [
+          accountGroup,
+          const SizedBox(height: AppSpacing.sp20),
+          notificationsGroup,
+          const SizedBox(height: AppSpacing.sp20),
+          dataGroup,
+        ],
+      );
+    }
+    return Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 20, color: AppColors.textSecondary),
-            const SizedBox(width: AppSpacing.sp12),
-            Expanded(child: Text(title, style: AppTextStyles.titleMedium)),
-            const SizedBox(width: AppSpacing.sp12),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 160),
-              child: Text(
-                value,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.right,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sp4),
-            const Icon(
-              Icons.chevron_right_rounded,
-              size: 18,
-              color: AppColors.textSecondary,
-            ),
+            Expanded(child: accountGroup),
+            const SizedBox(width: AppSpacing.sp20),
+            Expanded(child: notificationsGroup),
           ],
         ),
-      ),
+        const SizedBox(height: AppSpacing.sp20),
+        Row(
+          children: [
+            Expanded(child: dataGroup),
+            const SizedBox(width: AppSpacing.sp20),
+            const Expanded(child: SizedBox.shrink()),
+          ],
+        ),
+      ],
     );
   }
 }

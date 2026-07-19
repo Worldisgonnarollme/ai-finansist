@@ -8,10 +8,10 @@ import '../models/tax_settings.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_text_styles.dart';
 import '../core/theme/app_theme.dart';
-import '../widgets/tax_status_toggle.dart';
 import '../widgets/settings_section.dart';
 import '../widgets/responsive_page.dart';
 import '../main.dart';
+import '../features/tax_regime/tax_regime_screen.dart' show TaxRegimeSelectScreen;
 
 // Экран-обзор текущего налогового режима. Два независимых действия:
 // "Изменить" у карточки режима (сверху) — открывает выбор другого режима
@@ -297,135 +297,6 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-// Выбор статуса и системы налогообложения — отдельный экран, открывается
-// кнопкой "Изменить" у карточки режима на экране-обзоре. Сохраняет ТОЛЬКО
-// режим; доп.настройки редактируются отдельно (TaxRegimeDetailsScreen).
-class TaxRegimeSelectScreen extends StatefulWidget {
-  // true — экран открыт сразу после регистрации/входа (маршрут
-  // '/tax-mode'), когда режим ещё не выбран впервые: по завершении
-  // ведём не назад (pop — там экран логина, а не обзор режима), а
-  // вперёд, в MainScreen. false (по умолчанию) — обычная смена уже
-  // сохранённого режима из настроек, поведение как раньше (pop назад
-  // на TaxRegimeScreen). Страница и весь выбор режима — те же самые в
-  // обоих случаях, отличается только финальная навигация и заголовок.
-  final bool isInitialSetup;
-  const TaxRegimeSelectScreen({super.key, this.isInitialSetup = false});
-
-  @override
-  State<TaxRegimeSelectScreen> createState() => _TaxRegimeSelectScreenState();
-}
-
-class _TaxRegimeSelectScreenState extends State<TaxRegimeSelectScreen> {
-  late TaxMode _selected;
-
-  @override
-  void initState() {
-    super.initState();
-    _selected = context.read<AppState>().taxMode;
-  }
-
-  void _finish() {
-    if (widget.isInitialSetup) {
-      Navigator.pushReplacementNamed(context, '/main');
-      return;
-    }
-    Navigator.pop(context);
-    rootMessengerKey.currentState?.showSnackBar(
-      SnackBar(
-        content: const Text('Режим сохранён'),
-        backgroundColor: AppColors.surfaceAlt,
-      ),
-    );
-  }
-
-  Future<void> _continue() async {
-    final appState = context.read<AppState>();
-
-    // Режим без доп.настроек и без выбора объекта (только НПД, но он
-    // обрабатывается отдельно выше) — сохраняем сразу.
-    if (!_needsRegimeDetails(_selected)) {
-      appState.setTaxMode(_selected);
-      _finish();
-      return;
-    }
-
-    // Остальные режимы — экран с доп.настройками и/или выбором объекта
-    // (УСН/АУСН). Сохранение (и режима, и настроек) происходит там;
-    // сюда возвращается true при успехе.
-    final saved = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => TaxRegimeDetailsScreen(mode: _selected),
-      ),
-    );
-    if (!mounted) return;
-    if (saved == true) {
-      if (widget.isInitialSetup) {
-        Navigator.pushReplacementNamed(context, '/main');
-      } else {
-        Navigator.pop(context);
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: !widget.isInitialSetup,
-          title: Text(
-            widget.isInitialSetup
-                ? 'Выберите налоговый режим'
-                : 'Изменить режим',
-            style: AppTextStyles.headlineMedium,
-          ),
-        ),
-        body: SafeArea(
-          child: ResponsivePage(
-            child: Column(
-              children: [
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.sp16,
-                      AppSpacing.sp8,
-                      AppSpacing.sp16,
-                      AppSpacing.sp16,
-                    ),
-                    children: [
-                      _RegimePicker(
-                        selected: _selected,
-                        onChanged: (m) => setState(() => _selected = m),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.sp16,
-                    0,
-                    AppSpacing.sp16,
-                    AppSpacing.sp16,
-                  ),
-                  child: FilledButton(
-                    onPressed: _continue,
-                    child: Text(
-                      _needsRegimeDetails(_selected) ? 'Далее' : 'Сохранить',
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 // Редактирование доп.настроек режима (сотрудники, дата регистрации,
 // региональная ставка/патент). Открывается двумя путями: кнопкой
 // "Внести изменения" на экране-обзоре (mode = уже сохранённый режим) или
@@ -440,7 +311,10 @@ class TaxRegimeDetailsScreen extends StatefulWidget {
 }
 
 class _TaxRegimeDetailsScreenState extends State<TaxRegimeDetailsScreen> {
-  late TaxMode _mode;
+  // Объект УСН/АУСН (доходы / доходы-расходы) теперь выбирается на
+  // предыдущем шаге — экране "Налоговый режим" (features/tax_regime/) —
+  // поэтому здесь mode фиксирован на всё время экрана, без переключателя.
+  late final TaxMode _mode;
   late TaxSettings _settings;
 
   @override
@@ -449,21 +323,6 @@ class _TaxRegimeDetailsScreenState extends State<TaxRegimeDetailsScreen> {
     _mode = widget.mode;
     _settings = context.read<AppState>().taxSettings;
   }
-
-  // Семья (объект налогообложения) для текущего _mode — null, если у
-  // режима нет выбора объекта (ОСНО/ПСН/ЕСХН).
-  List<TaxMode>? get _family {
-    if (_mode == TaxMode.usn6 || _mode == TaxMode.usn15) {
-      return const [TaxMode.usn6, TaxMode.usn15];
-    }
-    if (_mode == TaxMode.ausn8 || _mode == TaxMode.ausn20) {
-      return const [TaxMode.ausn8, TaxMode.ausn20];
-    }
-    return null;
-  }
-
-  String get _familyLabel =>
-      (_mode == TaxMode.usn6 || _mode == TaxMode.usn15) ? 'УСН' : 'АУСН';
 
   void _save() {
     final appState = context.read<AppState>();
@@ -481,7 +340,6 @@ class _TaxRegimeDetailsScreenState extends State<TaxRegimeDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final family = _family;
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: () => FocusScope.of(context).unfocus(),
@@ -502,25 +360,16 @@ class _TaxRegimeDetailsScreenState extends State<TaxRegimeDetailsScreen> {
                       AppSpacing.sp16,
                     ),
                     children: [
-                      if (family != null) ...[
-                        _ObjectToggle(
-                          familyLabel: _familyLabel,
-                          selected: _mode,
-                          options: family,
-                          onChanged: (m) => setState(() => _mode = m),
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          left: AppSpacing.sp4,
+                          bottom: AppSpacing.sp16,
                         ),
-                        const SizedBox(height: AppSpacing.sp24),
-                      ] else
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            left: AppSpacing.sp4,
-                            bottom: AppSpacing.sp16,
-                          ),
-                          child: Text(
-                            _mode.shortName,
-                            style: AppTextStyles.bodyMedium,
-                          ),
+                        child: Text(
+                          _mode.shortName,
+                          style: AppTextStyles.bodyMedium,
                         ),
+                      ),
                       // Сотрудники и дата регистрации ИП показываются для
                       // всех режимов на этом экране, включая АУСН (у нёй
                       // просто не будет полей ставки/патента — они и так
@@ -557,141 +406,6 @@ class _TaxRegimeDetailsScreenState extends State<TaxRegimeDetailsScreen> {
   }
 }
 
-// Переключатель объекта налогообложения (Доходы / Доходы-расходы) для
-// семей УСН и АУСН — показывается сверху экрана доп.настроек режима.
-class _ObjectToggle extends StatelessWidget {
-  final String familyLabel;
-  final TaxMode selected;
-  final List<TaxMode> options;
-  final ValueChanged<TaxMode> onChanged;
-  const _ObjectToggle({
-    required this.familyLabel,
-    required this.selected,
-    required this.options,
-    required this.onChanged,
-  });
-
-  static String _percentOf(TaxMode m) {
-    switch (m) {
-      case TaxMode.usn6:
-        return '6%';
-      case TaxMode.usn15:
-        return '15%';
-      case TaxMode.ausn8:
-        return '8%';
-      case TaxMode.ausn20:
-        return '20%';
-      default:
-        return '';
-    }
-  }
-
-  static String _labelOf(TaxMode m) {
-    switch (m) {
-      case TaxMode.usn6:
-      case TaxMode.ausn8:
-        return 'Доходы';
-      case TaxMode.usn15:
-      case TaxMode.ausn20:
-        return 'Доходы-расходы';
-      default:
-        return m.shortName;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(
-            left: AppSpacing.sp4,
-            bottom: AppSpacing.sp8,
-          ),
-          child: Text(
-            'Объект $familyLabel'.toUpperCase(),
-            style: AppTextStyles.labelSmall,
-          ),
-        ),
-        Row(
-          children: [
-            for (final mode in options) ...[
-              if (mode != options.first) const SizedBox(width: AppSpacing.sp12),
-              Expanded(
-                child: _ObjectOption(
-                  label: _labelOf(mode),
-                  percent: _percentOf(mode),
-                  active: mode == selected,
-                  onTap: () => onChanged(mode),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _ObjectOption extends StatelessWidget {
-  final String label;
-  final String percent;
-  final bool active;
-  final VoidCallback onTap;
-  const _ObjectOption({
-    required this.label,
-    required this.percent,
-    required this.active,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sp12,
-          vertical: AppSpacing.sp12,
-        ),
-        decoration: BoxDecoration(
-          color: active ? AppColors.accentSubtle : AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(
-            color: active ? AppColors.accent : AppColors.divider,
-            width: active ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              active
-                  ? Icons.radio_button_checked_rounded
-                  : Icons.radio_button_off_rounded,
-              size: 20,
-              color: active ? AppColors.accent : AppColors.textSecondary,
-            ),
-            const SizedBox(width: AppSpacing.sp8),
-            Flexible(
-              child: Text(
-                '$label ($percent)',
-                style: AppTextStyles.titleMedium.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // ── Запрет ведущих нулей в числовом поле ───────────────────
 
 class _NoLeadingZeroFormatter extends TextInputFormatter {
@@ -710,118 +424,6 @@ class _NoLeadingZeroFormatter extends TextInputFormatter {
       );
     }
     return newValue;
-  }
-}
-
-// ── Picker режима ──────────────────────────────────────────
-
-// Двухуровневый выбор: сначала статус (Самозанятый / ИП), затем — только
-// для ИП — конкретная система налогообложения. НПД доступен исключительно
-// самозанятым, поэтому объединять его в один плоский список с режимами ИП
-// не нужно — статус и режим это разные по смыслу решения пользователя.
-//
-// УСН и АУСН показаны в списке одной карточкой каждая (а не отдельно по
-// объекту налогообложения) — конкретный объект (6%/15%, 8%/20%) выбирается
-// отдельным переключателем на следующем экране (после кнопки "Далее").
-typedef _RegimeFamily = ({
-  String label,
-  String description,
-  List<TaxMode> members,
-});
-
-final List<_RegimeFamily> _ipFamilies = [
-  (
-    label: 'УСН',
-    description: 'Упрощённая система — объект выбирается на следующем шаге',
-    members: [TaxMode.usn6, TaxMode.usn15],
-  ),
-  (
-    label: 'АУСН',
-    description: 'Автоматизированная УСН — объект выбирается на следующем шаге',
-    members: [TaxMode.ausn8, TaxMode.ausn20],
-  ),
-  (
-    label: TaxMode.osno.shortName,
-    description: TaxMode.osno.description,
-    members: [TaxMode.osno],
-  ),
-  (
-    label: TaxMode.psn.shortName,
-    description: TaxMode.psn.description,
-    members: [TaxMode.psn],
-  ),
-  (
-    label: TaxMode.eshn.shortName,
-    description: TaxMode.eshn.description,
-    members: [TaxMode.eshn],
-  ),
-];
-
-// Режим требует доп.экран (TaxRegimeDetailsScreen) если у него есть свои
-// настройки (hasInsurance) ИЛИ он входит в семью с выбором объекта
-// (УСН/АУСН) — там же и происходит выбор конкретной ставки.
-bool _needsRegimeDetails(TaxMode mode) =>
-    mode.hasInsurance || mode == TaxMode.ausn8 || mode == TaxMode.ausn20;
-
-class _RegimePicker extends StatefulWidget {
-  final TaxMode selected;
-  final ValueChanged<TaxMode> onChanged;
-  const _RegimePicker({required this.selected, required this.onChanged});
-
-  @override
-  State<_RegimePicker> createState() => _RegimePickerState();
-}
-
-class _RegimePickerState extends State<_RegimePicker> {
-  // Запоминает последний выбранный режим ИП, чтобы при переключении
-  // "ИП" → "Самозанятый" → "ИП" не сбрасывать выбор на дефолт.
-  late TaxMode _lastIpMode;
-
-  @override
-  void initState() {
-    super.initState();
-    _lastIpMode = widget.selected == TaxMode.npd
-        ? TaxMode.usn6
-        : widget.selected;
-  }
-
-  @override
-  void didUpdateWidget(_RegimePicker old) {
-    super.didUpdateWidget(old);
-    if (widget.selected != TaxMode.npd) {
-      _lastIpMode = widget.selected;
-    }
-  }
-
-  bool get _isSelfEmployed => widget.selected == TaxMode.npd;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TaxStatusToggle(
-          isSelfEmployed: _isSelfEmployed,
-          onChanged: (selfEmployed) =>
-              widget.onChanged(selfEmployed ? TaxMode.npd : _lastIpMode),
-        ),
-        // Под "Самозанятый" на экране выбора режима — без описаний и
-        // справочных карточек (у НПД нет выбора системы налогообложения,
-        // показывать тут нечего). Справка про НПД остаётся только на
-        // экране-обзоре уже сохранённого режима (TaxRegimeScreen).
-        AnimatedSize(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOutCubic,
-          alignment: Alignment.topCenter,
-          child: _isSelfEmployed
-              ? const SizedBox.shrink()
-              : _IpRegimeList(
-                  selected: widget.selected,
-                  onChanged: widget.onChanged,
-                ),
-        ),
-      ],
-    );
   }
 }
 
@@ -1333,82 +935,6 @@ class _EshnInfoCards extends StatelessWidget {
   }
 }
 
-// Список конкретных систем налогообложения ИП — раскрывается только при
-// выбранном статусе "ИП" (анимация раскрытия — на AnimatedSize снаружи).
-class _IpRegimeList extends StatelessWidget {
-  final TaxMode selected;
-  final ValueChanged<TaxMode> onChanged;
-  const _IpRegimeList({required this.selected, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.sp12),
-      child: Column(
-        children: _ipFamilies.map((family) {
-          final active = family.members.contains(selected);
-          return GestureDetector(
-            // Если семья уже активна — сохраняем текущий выбранный объект
-            // (usn6/usn15 и т.п.), иначе берём первый член семьи по
-            // умолчанию (конкретика уточняется на следующем шаге).
-            onTap: () => onChanged(active ? selected : family.members.first),
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sp8),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sp16,
-                  vertical: AppSpacing.sp12,
-                ),
-                decoration: BoxDecoration(
-                  color: active ? AppColors.accentSubtle : AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(
-                    color: active ? AppColors.accent : AppColors.divider,
-                    width: active ? 1.5 : 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            family.label,
-                            style: AppTextStyles.titleMedium.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            family.description,
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.textSecondary,
-                              letterSpacing: 0,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (active)
-                      const Icon(
-                        Icons.check_circle_rounded,
-                        color: AppColors.accent,
-                        size: 20,
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
 // ── Дополнительные настройки режима ──────────────────────
 
 class _TaxSettingsSection extends StatefulWidget {
@@ -1432,6 +958,12 @@ class _TaxSettingsSectionState extends State<_TaxSettingsSection> {
   late TextEditingController _employeeCtrl;
   late TextEditingController _fixedAssetsCtrl;
   late TextEditingController _patentDurationCtrl;
+
+  // Патент можно оформить строго на 1–12 месяцев (ст. 346.51 НК РФ, п. 1) —
+  // значения вне диапазона не сохраняются (см. _commitPatentDuration), но
+  // раньше это происходило молча: поле продолжало показывать введённое
+  // число, хотя оно никуда не применялось. Теперь это явно видно.
+  bool _patentDurationInvalid = false;
 
   @override
   void initState() {
@@ -1632,13 +1164,14 @@ class _TaxSettingsSectionState extends State<_TaxSettingsSection> {
 
   // Патент можно взять на срок от 1 до 12 месяцев внутри календарного
   // года — дата начала может быть и в прошлом (уже действующий патент),
-  // и в ближайшем будущем (куплен заранее).
+  // и в ближайшем будущем (куплен заранее). Нижняя граница — 2000 год,
+  // как и у остальных полей дат в приложении.
   Future<void> _pickPatentStartDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
       initialDate: widget.settings.patentStartDate ?? now,
-      firstDate: DateTime(now.year - 1),
+      firstDate: DateTime(2000),
       lastDate: DateTime(now.year + 1),
       helpText: 'Дата начала действия патента',
     );
@@ -1648,12 +1181,23 @@ class _TaxSettingsSectionState extends State<_TaxSettingsSection> {
 
   void _commitPatentDuration(String val) {
     final parsed = int.tryParse(val);
-    if (parsed == null || parsed < 1 || parsed > 12) return;
+    final invalid = parsed == null || parsed < 1 || parsed > 12;
+    if (invalid != _patentDurationInvalid) {
+      setState(() => _patentDurationInvalid = invalid);
+    }
+    if (invalid) return;
     widget.onChanged(widget.settings.copyWith(patentDurationMonths: parsed));
   }
 
   void _savePatentDuration(String val) {
     _commitPatentDuration(val);
+    // Значение так и осталось вне диапазона 1–12 — возвращаем поле к
+    // последнему сохранённому значению, а не оставляем "фантомный" текст,
+    // который никогда не применялся.
+    if (_patentDurationInvalid) {
+      _patentDurationCtrl.text = widget.settings.patentDurationMonths.toString();
+      setState(() => _patentDurationInvalid = false);
+    }
     FocusScope.of(context).unfocus();
   }
 
@@ -2048,9 +1592,13 @@ class _TaxSettingsSectionState extends State<_TaxSettingsSection> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'От 1 до 12 месяцев внутри календарного года',
+                        _patentDurationInvalid
+                            ? 'Вне диапазона — не сохранится, введите от 1 до 12'
+                            : 'От 1 до 12 месяцев внутри календарного года',
                         style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.textSecondary,
+                          color: _patentDurationInvalid
+                              ? AppColors.negative
+                              : AppColors.textSecondary,
                           letterSpacing: 0,
                         ),
                       ),
@@ -2069,13 +1617,22 @@ class _TaxSettingsSectionState extends State<_TaxSettingsSection> {
                       _NoLeadingZeroFormatter(),
                     ],
                     style: AppTextStyles.titleMedium.copyWith(
-                      color: AppColors.textPrimary,
+                      color: _patentDurationInvalid
+                          ? AppColors.negative
+                          : AppColors.textPrimary,
                     ),
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.sp12,
                         vertical: AppSpacing.sp12,
                       ),
+                      suffix: _patentDurationInvalid
+                          ? const Icon(
+                              Icons.warning_amber_rounded,
+                              color: AppColors.negative,
+                              size: 16,
+                            )
+                          : null,
                     ),
                     onChanged: _commitPatentDuration,
                     onSubmitted: _savePatentDuration,

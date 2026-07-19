@@ -46,8 +46,7 @@ class CsvService {
       if (m == null) continue;
 
       final date = _parseDate(m.group(1)!);
-      final rawAmt =
-          m.group(2)!.replaceAll(' ', '').replaceAll(',', '.');
+      final rawAmt = m.group(2)!.replaceAll(' ', '').replaceAll(',', '.');
       final amount = double.tryParse(rawAmt);
       if (date == null || amount == null) continue;
 
@@ -63,13 +62,15 @@ class CsvService {
 
       if (desc.isEmpty) desc = 'Операция';
 
-      txs.add(Transaction(
-        date: date,
-        amount: amount.abs(),
-        description: desc,
-        type: amount >= 0 ? TransactionType.income : TransactionType.expense,
-        source: TransactionSource.csv,
-      ));
+      txs.add(
+        Transaction(
+          date: date,
+          amount: amount.abs(),
+          description: desc,
+          type: amount >= 0 ? TransactionType.income : TransactionType.expense,
+          source: TransactionSource.csv,
+        ),
+      );
     }
     return txs;
   }
@@ -107,8 +108,8 @@ class CsvService {
     if (rows.length < 2) return [];
 
     final headers = rows[0].map((h) => h.toString().trim()).toList();
-    final isTinkoffExport = headers.contains('Дата операции') ||
-        headers.contains('Дата платежа');
+    final isTinkoffExport =
+        headers.contains('Дата операции') || headers.contains('Дата платежа');
 
     final txs = <Transaction>[];
     for (int i = 1; i < rows.length; i++) {
@@ -126,7 +127,9 @@ class CsvService {
 
   // Tinkoff/T-Bank CSV export (semicolon-separated, column names in row 0)
   static Transaction? _parseTinkoffExportRow(
-      List<dynamic> row, List<String> headers) {
+    List<dynamic> row,
+    List<String> headers,
+  ) {
     int idx(String name) => headers.indexOf(name);
 
     final dateIdx = idx('Дата операции');
@@ -144,7 +147,8 @@ class CsvService {
 
     final date = _parseDate(row[dateIdx].toString().trim());
     final amount = double.tryParse(
-        row[amtIdx].toString().replaceAll(',', '.').replaceAll(' ', ''));
+      row[amtIdx].toString().replaceAll(',', '.').replaceAll(' ', ''),
+    );
     final desc = (descIdx >= 0 && row.length > descIdx)
         ? row[descIdx].toString().trim()
         : 'Операция';
@@ -171,10 +175,12 @@ class CsvService {
     if (row.length >= 3) {
       description = row[1].toString().trim();
       amount = double.tryParse(
-          row[2].toString().replaceAll(',', '.').replaceAll(' ', ''));
+        row[2].toString().replaceAll(',', '.').replaceAll(' ', ''),
+      );
     } else {
       amount = double.tryParse(
-          row[1].toString().replaceAll(',', '.').replaceAll(' ', ''));
+        row[1].toString().replaceAll(',', '.').replaceAll(' ', ''),
+      );
     }
 
     if (date == null || amount == null) return null;

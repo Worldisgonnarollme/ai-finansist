@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "1034356664038",
+    "project_id": "ai-financial-agent-150f1",
+    "storage_bucket": "ai-financial-agent-150f1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1034356664038:android:da7e68c8e869b74e217d27",
+        "android_client_info": {
+          "package_name": "com.example.ai_finansist"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1034356664038-5ke188cqsuq39nmuadptfrk3h4tsa7ln.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7I8HkH4KrDH_8Rf2XuKfFYPqgBj-K6uc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1034356664038-5ke188cqsuq39nmuadptfrk3h4tsa7ln.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1034356664038-cema4hb0cb9i4914a3m2csmrkji9qg3g.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.aiFinansist"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

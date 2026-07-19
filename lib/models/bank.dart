@@ -26,16 +26,16 @@ class ConnectedBank {
   });
 
   Map<String, dynamic> toJson() => {
-        'bankId': bankId,
-        'bankName': bankName,
-        'connectedAt': connectedAt.toIso8601String(),
-      };
+    'bankId': bankId,
+    'bankName': bankName,
+    'connectedAt': connectedAt.toIso8601String(),
+  };
 
   factory ConnectedBank.fromJson(Map<String, dynamic> json) => ConnectedBank(
-        bankId: json['bankId'] as String,
-        bankName: json['bankName'] as String,
-        connectedAt: DateTime.parse(json['connectedAt'] as String),
-      );
+    bankId: json['bankId'] as String,
+    bankName: json['bankName'] as String,
+    connectedAt: DateTime.parse(json['connectedAt'] as String),
+  );
 }
 
 const List<Bank> kSupportedBanks = [

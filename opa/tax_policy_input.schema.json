@@ -1,0 +1,427 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://your-app.dev/schemas/tax_policy_input.schema.json",
+  "title": "Tax Policy Input",
+  "description": "Нормализованный вход для Open Policy Agent (OPA) для юридической классификации транзакций",
+  "type": "object",
+  "required": ["user", "transaction"],
+  "properties": {
+    "user": {
+      "type": "object",
+      "required": ["tax_mode"],
+      "properties": {
+        "tax_mode": {
+          "type": "string",
+          "description": "Режим налогообложения пользователя",
+          "enum": [
+            "NPD",
+            "USN_INCOME",
+            "USN_INCOME_EXPENSE",
+            "AUSN_INCOME",
+            "AUSN_INCOME_EXPENSE",
+            "OSNO",
+            "PSN",
+            "ESHN"
+          ]
+        },
+        "is_ip": {
+          "type": "boolean",
+          "description": "Является ли пользователь ИП — обязательное поле при tax_mode=OSNO (ст. 210 НДФЛ или ст. 247 налог на прибыль) и при tax_mode=PSN (только ИП), без значения по умолчанию"
+        },
+        "region": {
+          "type": "string",
+          "description": "Регион регистрации (для патента и лимитов)",
+          "nullable": true
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": { "tax_mode": { "const": "OSNO" } },
+            "required": ["tax_mode"]
+          },
+          "then": { "required": ["is_ip"] }
+        },
+        {
+          "if": {
+            "properties": { "tax_mode": { "const": "PSN" } },
+            "required": ["tax_mode"]
+          },
+          "then": { "required": ["is_ip"] }
+        }
+      ]
+    },
+    "transaction": {
+      "type": "object",
+      "required": [
+        "id",
+        "direction",
+        "amount",
+        "date",
+        "counterparty_type",
+        "related_to_business",
+        "linked_document",
+        "has_vat_invoice"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Уникальный идентификатор транзакции"
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["income", "expense"],
+          "description": "Тип движения средств"
+        },
+        "amount": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Сумма транзакции"
+        },
+        "currency": {
+          "type": "string",
+          "default": "RUB"
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "Дата транзакции"
+        },
+        "counterparty_type": {
+          "type": "string",
+          "enum": ["individual", "company", "bank", "platform"],
+          "description": "Тип контрагента"
+        },
+        "counterparty_name": {
+          "type": "string",
+          "description": "Имя или название контрагента",
+          "nullable": true
+        },
+        "description": {
+          "type": "string",
+          "description": "Назначение платежа / комментарий банка",
+          "default": ""
+        },
+        "payment_method": {
+          "type": "string",
+          "enum": ["card", "account", "cash", "unknown"],
+          "default": "unknown"
+        },
+        "linked_document": {
+          "type": "boolean",
+          "description": "Есть ли договор / акт / счет — обязательное поле, явное подтверждение требуется от вызывающей стороны (ИИ или разработчика), значение по умолчанию не предполагается"
+        },
+        "related_to_business": {
+          "type": "boolean",
+          "description": "Подтверждена ли связь операции с предпринимательской/профессиональной деятельностью (структурный факт, не текстовая эвристика) — обязательное поле, без значения по умолчанию"
+        },
+        "vat_applicable": {
+          "type": "boolean",
+          "description": "Относится ли операция к реализации товаров/работ/услуг, признаваемой объектом обложения НДС (ст. 146 НК РФ)",
+          "default": false
+        },
+        "has_vat_invoice": {
+          "type": "boolean",
+          "description": "Есть ли счёт-фактура, подтверждающая операцию для целей НДС — обязательное поле, без значения по умолчанию"
+        },
+        "excluded_under_art_270": {
+          "type": "boolean",
+          "description": "ОСНО: входит ли расход в закрытый перечень расходов, не учитываемых при налогообложении (ст. 270 НК РФ) — обязательное поле для расходных операций ОСНО, явное подтверждение требуется от вызывающей стороны, значение по умолчанию не предполагается"
+        },
+        "vat_exception": {
+          "type": "string",
+          "enum": ["import_vat", "tax_agent_vat"],
+          "description": "Основание для НДС при режиме без НДС (АУСН/ПСН) — ввозной НДС или обязанности налогового агента (ст. 161 НК РФ), не связано с объектом налогообложения самого режима",
+          "nullable": true
+        },
+        "confirmed_by": {
+          "type": "string",
+          "enum": ["authorized_bank", "kkt", "unconfirmed"],
+          "description": "АУСН: чем подтверждена операция — данными уполномоченного банка, ККТ, или не подтверждена (17-ФЗ от 25.02.2022). Обязательное поле для операций на АУСН."
+        },
+        "is_own_production": {
+          "type": "boolean",
+          "description": "ЕСХН: относится ли доход к собственному производству (в т.ч. первичной переработке) сельхозпродукции — обязательное поле для доходных операций на ЕСХН (ст. 346.2 НК РФ), без значения по умолчанию"
+        },
+        "included_under_art_346_5": {
+          "type": "boolean",
+          "description": "ЕСХН: входит ли расход в закрытый перечень ст. 346.5 НК РФ — обязательное поле для расходных операций на ЕСХН, без значения по умолчанию"
+        },
+        "activity_covered_by_patent": {
+          "type": "boolean",
+          "description": "ПСН: относится ли доход к виду деятельности, покрытому действующим патентом (ст. 346.43, 346.45 НК РФ) — обязательное поле для доходных операций на ПСН, без значения по умолчанию"
+        }
+      },
+      "additionalProperties": false
+    },
+    "context": {
+      "type": "object",
+      "description": "Дополнительный контекст для OPA (необязательный, кроме регимо-специфичных объектов ниже, обязательных при соответствующем tax_mode)",
+      "properties": {
+        "annual_income_ytd": {
+          "type": "number",
+          "description": "Доход с начала года (для лимитов)",
+          "minimum": 0
+        },
+        "is_recurring": {
+          "type": "boolean",
+          "description": "Регулярный платеж",
+          "default": false
+        },
+        "ml_hints": {
+          "type": "array",
+          "description": "Подсказки от ML-классификатора (НЕ финальное решение)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ausn": {
+          "type": "object",
+          "description": "Регимо-уровневые факты для проверки права на АУСН (17-ФЗ от 25.02.2022)",
+          "required": [
+            "pilot_region_confirmed",
+            "annual_income",
+            "avg_headcount",
+            "residual_fixed_assets_value",
+            "has_branches",
+            "excluded_activity"
+          ],
+          "properties": {
+            "pilot_region_confirmed": {
+              "type": "boolean",
+              "description": "Подтверждена регистрация/деятельность в пилотном регионе эксперимента"
+            },
+            "annual_income": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Доход за год — лимит 60 млн ₽"
+            },
+            "avg_headcount": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Средняя численность работников — лимит 5 человек"
+            },
+            "residual_fixed_assets_value": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Остаточная стоимость основных средств — лимит 150 млн ₽"
+            },
+            "has_branches": {
+              "type": "boolean",
+              "description": "Есть ли филиалы — наличие исключает право на АУСН"
+            },
+            "excluded_activity": {
+              "type": "boolean",
+              "description": "Относится ли деятельность к видам, исключённым законом № 17-ФЗ"
+            }
+          },
+          "additionalProperties": false
+        },
+        "eshn": {
+          "type": "object",
+          "description": "Регимо-уровневые факты для проверки права на ЕСХН (ст. 346.2, 145 НК РФ)",
+          "required": ["agri_income_share"],
+          "properties": {
+            "agri_income_share": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Доля дохода от сельскохозяйственной деятельности за налоговый период — порог 0.70 (ст. 346.2 НК РФ)"
+            },
+            "vat_exemption_claimed": {
+              "type": "boolean",
+              "description": "Заявлено ли освобождение от НДС по ст. 145 НК РФ",
+              "default": false
+            },
+            "prior_year_income_excl_vat": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Доход без НДС за предыдущий календарный год — основание для проверки права на освобождение по ст. 145 п. 1 НК РФ"
+            }
+          },
+          "additionalProperties": false
+        },
+        "psn": {
+          "type": "object",
+          "description": "Регимо-уровневые факты для проверки права на ПСН (ст. 346.43, 346.45 НК РФ)",
+          "required": [
+            "regional_activity_allowed",
+            "annual_income_all_patents",
+            "avg_headcount_all_patents",
+            "hall_area_applicable"
+          ],
+          "properties": {
+            "regional_activity_allowed": {
+              "type": "boolean",
+              "description": "Подтверждён ли вид деятельности по региональному закону, принятому на основании ст. 346.43 НК РФ"
+            },
+            "annual_income_all_patents": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Совокупный доход по всем патентам за год — лимит 60 млн ₽ (ст. 346.45 НК РФ)"
+            },
+            "avg_headcount_all_patents": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Совокупная средняя численность работников по всем патентам — лимит 15 человек"
+            },
+            "hall_area_applicable": {
+              "type": "boolean",
+              "description": "Относится ли вид деятельности к рознице/общепиту, для которых установлен лимит площади зала"
+            },
+            "hall_area": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Площадь торгового зала/зала обслуживания, кв.м — обязательно при hall_area_applicable=true, лимит 150 кв.м"
+            }
+          },
+          "additionalProperties": false
+        },
+        "npd": {
+          "type": "object",
+          "description": "Регимо-уровневые факты для проверки права на НПД (ст. 4 ч. 2 422-ФЗ от 27.11.2018)",
+          "required": [
+            "annual_income",
+            "has_employees",
+            "is_resale",
+            "sells_excisable_or_marked_goods",
+            "mines_or_sells_minerals",
+            "agent_scheme_without_exception",
+            "combines_with_other_regime_same_activity"
+          ],
+          "properties": {
+            "annual_income": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Доход за календарный год — лимит 2,4 млн ₽ (ст. 4 ч. 2 п. 8 422-ФЗ)"
+            },
+            "has_employees": {
+              "type": "boolean",
+              "description": "Есть ли наёмные работники по трудовым договорам — наличие исключает право на НПД"
+            },
+            "is_resale": {
+              "type": "boolean",
+              "description": "Перепродажа товаров/имущественных прав (кроме личного имущества) — исключает право на НПД"
+            },
+            "sells_excisable_or_marked_goods": {
+              "type": "boolean",
+              "description": "Реализация подакцизных товаров или товаров, подлежащих обязательной маркировке — исключает право на НПД"
+            },
+            "mines_or_sells_minerals": {
+              "type": "boolean",
+              "description": "Добыча и/или реализация полезных ископаемых — исключает право на НПД"
+            },
+            "agent_scheme_without_exception": {
+              "type": "boolean",
+              "description": "Деятельность по договорам поручения/комиссии/агентским договорам без исключения для доставки с ККТ продавца — исключает право на НПД"
+            },
+            "combines_with_other_regime_same_activity": {
+              "type": "boolean",
+              "description": "Совмещение НПД с другим налоговым режимом по той же деятельности — исключает право на НПД"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "user": { "properties": { "tax_mode": { "const": "NPD" } }, "required": ["tax_mode"] }
+        },
+        "required": ["user"]
+      },
+      "then": {
+        "properties": { "context": { "required": ["npd"] } },
+        "required": ["context"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "user": { "properties": { "tax_mode": { "const": "OSNO" } }, "required": ["tax_mode"] },
+          "transaction": { "properties": { "direction": { "const": "expense" } }, "required": ["direction"] }
+        },
+        "required": ["user", "transaction"]
+      },
+      "then": { "properties": { "transaction": { "required": ["excluded_under_art_270"] } } }
+    },
+    {
+      "if": {
+        "properties": {
+          "user": {
+            "properties": { "tax_mode": { "enum": ["AUSN_INCOME", "AUSN_INCOME_EXPENSE"] } },
+            "required": ["tax_mode"]
+          }
+        },
+        "required": ["user"]
+      },
+      "then": {
+        "properties": {
+          "transaction": { "required": ["confirmed_by"] },
+          "context": { "required": ["ausn"] }
+        },
+        "required": ["context"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "user": { "properties": { "tax_mode": { "const": "ESHN" } }, "required": ["tax_mode"] }
+        },
+        "required": ["user"]
+      },
+      "then": {
+        "properties": { "context": { "required": ["eshn"] } },
+        "required": ["context"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "user": { "properties": { "tax_mode": { "const": "ESHN" } }, "required": ["tax_mode"] },
+          "transaction": { "properties": { "direction": { "const": "income" } }, "required": ["direction"] }
+        },
+        "required": ["user", "transaction"]
+      },
+      "then": { "properties": { "transaction": { "required": ["is_own_production"] } } }
+    },
+    {
+      "if": {
+        "properties": {
+          "user": { "properties": { "tax_mode": { "const": "ESHN" } }, "required": ["tax_mode"] },
+          "transaction": { "properties": { "direction": { "const": "expense" } }, "required": ["direction"] }
+        },
+        "required": ["user", "transaction"]
+      },
+      "then": { "properties": { "transaction": { "required": ["included_under_art_346_5"] } } }
+    },
+    {
+      "if": {
+        "properties": {
+          "user": { "properties": { "tax_mode": { "const": "PSN" } }, "required": ["tax_mode"] }
+        },
+        "required": ["user"]
+      },
+      "then": {
+        "properties": { "context": { "required": ["psn"] } },
+        "required": ["context"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "user": { "properties": { "tax_mode": { "const": "PSN" } }, "required": ["tax_mode"] },
+          "transaction": { "properties": { "direction": { "const": "income" } }, "required": ["direction"] }
+        },
+        "required": ["user", "transaction"]
+      },
+      "then": { "properties": { "transaction": { "required": ["activity_covered_by_patent"] } } }
+    }
+  ]
+}

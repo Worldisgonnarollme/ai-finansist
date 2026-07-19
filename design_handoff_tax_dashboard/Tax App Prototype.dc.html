@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#EDEAE1;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  * { box-sizing: border-box; }
+  ::-webkit-scrollbar{width:0;height:0}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes popIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+  a{color:#1F7A4F}
+  a:hover{color:#145C3A}
+</style>
+</helmet>
+<div style="min-height:100vh;width:100%;display:flex;align-items:flex-start;justify-content:center;gap:28px;padding:40px 24px;">
+
+  <div style="width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:6px;position:sticky;top:40px;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#78715F;padding:0 4px 8px;">Экраны прототипа</div>
+
+    <button onClick="{{ goOnboarding }}" style="text-align:left;border:none;background:{{ navBgOnboarding }};color:#23261E;font:600 13px Inter;padding:10px 12px;border-radius:10px;cursor:pointer;">Онбординг</button>
+    <button onClick="{{ goTaxMode }}" style="text-align:left;border:none;background:{{ navBgTaxMode }};color:#23261E;font:600 13px Inter;padding:10px 12px;border-radius:10px;cursor:pointer;">Выбор режима</button>
+
+    <div style="height:1px;background:#E7DFCE;margin:8px 4px;"></div>
+
+    <button onClick="{{ jumpTabDashboard }}" style="text-align:left;border:none;background:{{ navBgDashboard }};color:#23261E;font:600 13px Inter;padding:10px 12px;border-radius:10px;cursor:pointer;">Главная</button>
+    <button onClick="{{ jumpTabHistory }}" style="text-align:left;border:none;background:{{ navBgHistory }};color:#23261E;font:600 13px Inter;padding:10px 12px;border-radius:10px;cursor:pointer;">История</button>
+    <button onClick="{{ jumpTabStatements }}" style="text-align:left;border:none;background:{{ navBgStatements }};color:#23261E;font:600 13px Inter;padding:10px 12px;border-radius:10px;cursor:pointer;">Выписки</button>
+    <button onClick="{{ jumpTabSettings }}" style="text-align:left;border:none;background:{{ navBgSettings }};color:#23261E;font:600 13px Inter;padding:10px 12px;border-radius:10px;cursor:pointer;">Настройки</button>
+
+    <div style="height:1px;background:#E7DFCE;margin:8px 4px;"></div>
+    <div style="font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9C9484;padding:0 4px 4px;">Вложенные экраны</div>
+    <button onClick="{{ jumpOverlayProfile }}" style="text-align:left;border:none;background:{{ navBgProfile }};color:#23261E;font:500 12.5px Inter;padding:8px 12px;border-radius:10px;cursor:pointer;">Профиль</button>
+    <button onClick="{{ jumpOverlayTaxRegime }}" style="text-align:left;border:none;background:{{ navBgTaxRegime }};color:#23261E;font:500 12.5px Inter;padding:8px 12px;border-radius:10px;cursor:pointer;">Налоговый режим</button>
+    <button onClick="{{ jumpOverlayConnectedBanks }}" style="text-align:left;border:none;background:{{ navBgConnectedBanks }};color:#23261E;font:500 12.5px Inter;padding:8px 12px;border-radius:10px;cursor:pointer;">Банки</button>
+    <button onClick="{{ jumpOverlayAddTransaction }}" style="text-align:left;border:none;background:{{ navBgAddTransaction }};color:#23261E;font:500 12.5px Inter;padding:8px 12px;border-radius:10px;cursor:pointer;">Новая операция</button>
+
+    <div style="height:1px;background:#E7DFCE;margin:8px 4px;"></div>
+    <div style="font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9C9484;padding:0 4px 4px;">Вариант дашборда</div>
+    <div style="display:flex;gap:6px;padding:0 4px;">
+      <button onClick="{{ setVariant1 }}" style="flex:1;border:1.5px solid {{ v1Border }};background:{{ v1Bg }};color:{{ v1Color }};font:700 13px Inter;padding:8px 0;border-radius:8px;cursor:pointer;">1</button>
+      <button onClick="{{ setVariant2 }}" style="flex:1;border:1.5px solid {{ v2Border }};background:{{ v2Bg }};color:{{ v2Color }};font:700 13px Inter;padding:8px 0;border-radius:8px;cursor:pointer;">2</button>
+      <button onClick="{{ setVariant3 }}" style="flex:1;border:1.5px solid {{ v3Border }};background:{{ v3Bg }};color:{{ v3Color }};font:700 13px Inter;padding:8px 0;border-radius:8px;cursor:pointer;">3</button>
+    </div>
+    <div style="font-size:11px;color:#9C9484;padding:6px 4px 0;line-height:1.4;">1 — акцентный, 2 — официальный документ, 3 — данные и оптимизация</div>
+  </div>
+
+  <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ deviceWidth }}" height="{{ deviceHeight }}" hint-size="402,874">
+    <div style="position:relative;height:100%;width:100%;overflow:hidden;background:#fff;">
+
+      <sc-if value="{{ showOnboarding }}" hint-placeholder-val="{{ true }}">
+        <div style="height:100%;display:flex;flex-direction:column;padding-top:62px;background:#fff;animation:fadeIn 320ms ease both;">
+          <div style="display:flex;justify-content:flex-end;padding:0 20px;">
+            <button onClick="{{ onbSkip }}" style="border:none;background:none;color:#78715F;font:600 14px Inter;cursor:pointer;padding:8px;">Пропустить</button>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 32px;text-align:center;gap:24px;">
+            <div style="width:104px;height:104px;border-radius:50%;background:#E3F1E7;display:flex;align-items:center;justify-content:center;">
+              <sc-if value="{{ onbIsSlide0 }}"><svg width="46" height="46" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" stroke="#1F7A4F" stroke-width="1.6"/><rect x="7" y="5" width="10" height="4" rx="0.5" fill="#1F7A4F"/><circle cx="8.5" cy="13" r="1.3" fill="#1F7A4F"/><circle cx="12" cy="13" r="1.3" fill="#1F7A4F"/><circle cx="15.5" cy="13" r="1.3" fill="#1F7A4F"/><circle cx="8.5" cy="17" r="1.3" fill="#1F7A4F"/><circle cx="12" cy="17" r="1.3" fill="#1F7A4F"/><circle cx="15.5" cy="17" r="1.3" fill="#1F7A4F"/></svg></sc-if>
+              <sc-if value="{{ onbIsSlide1 }}"><svg width="46" height="46" viewBox="0 0 24 24" fill="none"><path d="M3 10L12 3l9 7" stroke="#1F7A4F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9v11h14V9" stroke="#1F7A4F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 20v-6h4v6" stroke="#1F7A4F" stroke-width="1.6" stroke-linejoin="round"/></svg></sc-if>
+              <sc-if value="{{ onbIsSlide2 }}"><svg width="46" height="46" viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-8" stroke="#1F7A4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h6v6" stroke="#1F7A4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>
+            </div>
+            <div style="font:800 24px/1.3 Inter;color:#23261E;">{{ onbTitle }}</div>
+            <div style="font:400 15px/1.5 Inter;color:#78715F;max-width:280px;">{{ onbSubtitle }}</div>
+          </div>
+          <div style="padding:0 32px 40px;display:flex;flex-direction:column;gap:20px;align-items:center;">
+            <div style="display:flex;gap:8px;">
+              <div style="width:{{ onbDotW0 }}px;height:8px;border-radius:99px;background:{{ onbDotC0 }};transition:all 220ms;"></div>
+              <div style="width:{{ onbDotW1 }}px;height:8px;border-radius:99px;background:{{ onbDotC1 }};transition:all 220ms;"></div>
+              <div style="width:{{ onbDotW2 }}px;height:8px;border-radius:99px;background:{{ onbDotC2 }};transition:all 220ms;"></div>
+            </div>
+            <button onClick="{{ onbNext }}" style="width:100%;border:none;background:#1F7A4F;color:#fff;font:700 16px Inter;padding:16px 0;border-radius:12px;cursor:pointer;">{{ onbCta }}</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showTaxMode }}" hint-placeholder-val="{{ false }}">
+        <div style="height:100%;display:flex;flex-direction:column;padding-top:62px;background:#fff;animation:fadeIn 320ms ease both;">
+          <div style="padding:8px 20px 4px;">
+            <div style="font:800 26px Inter;color:#23261E;">Выберите статус</div>
+            <div style="font:400 14px Inter;color:#78715F;margin-top:6px;">Это определит доступные налоговые режимы</div>
+          </div>
+          <div style="margin:20px 20px 8px;background:#F1E9DA;border-radius:12px;padding:4px;display:flex;gap:4px;">
+            <button onClick="{{ chooseSelfEmployed }}" style="flex:1;border:none;background:{{ segSelfEmployedBg }};color:{{ segSelfEmployedColor }};font:700 13.5px Inter;padding:11px 0;border-radius:9px;cursor:pointer;transition:all 200ms;">Самозанятый</button>
+            <button onClick="{{ chooseIp }}" style="flex:1;border:none;background:{{ segIpBg }};color:{{ segIpColor }};font:700 13.5px Inter;padding:11px 0;border-radius:9px;cursor:pointer;transition:all 200ms;">ИП</button>
+          </div>
+          <div style="flex:1;overflow:auto;padding:12px 20px 20px;display:flex;flex-direction:column;gap:10px;">
+            <sc-for list="{{ regimeChoices }}" as="fam" hint-placeholder-count="3">
+              <div style="font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9C9484;margin:8px 0 2px;">{{ fam.label }}</div>
+              <sc-for list="{{ fam.options }}" as="opt" hint-placeholder-count="1">
+                <button onClick="{{ opt.select }}" style="text-align:left;border:1.5px solid {{ opt.border }};background:{{ opt.bg }};border-radius:12px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;">
+                  <div style="width:20px;height:20px;border-radius:50%;border:2px solid {{ opt.dotBorder }};background:{{ opt.dotBg }};flex-shrink:0;"></div>
+                  <div style="flex:1;">
+                    <div style="font:600 14.5px Inter;color:#23261E;">{{ opt.name }}</div>
+                    <div style="font:400 12.5px Inter;color:#78715F;margin-top:2px;">{{ opt.desc }}</div>
+                  </div>
+                  <div style="font:700 13px 'JetBrains Mono';color:#1F7A4F;">{{ opt.rate }}</div>
+                </button>
+              </sc-for>
+            </sc-for>
+          </div>
+          <div style="padding:12px 20px 32px;">
+            <button onClick="{{ continueToMain }}" style="width:100%;border:none;background:#1F7A4F;color:#fff;font:700 16px Inter;padding:16px 0;border-radius:12px;cursor:pointer;">Продолжить</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showMain }}" hint-placeholder-val="{{ false }}">
+        <div style="height:100%;display:flex;flex-direction:column;background:#EFECE3;">
+          <div style="flex:1;overflow:auto;padding-top:56px;" id="main-scroll">
+
+            <sc-if value="{{ tabDashboard }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:16px 18px 8px;display:flex;align-items:center;justify-content:space-between;animation:fadeIn 260ms ease both;">
+                <div>
+                  <div style="font:400 13px Inter;color:#78715F;">Здравствуйте, Алексей</div>
+                  <div style="font:700 12px Inter;color:#1F7A4F;background:#E3F1E7;display:inline-block;padding:3px 10px;border-radius:99px;margin-top:6px;">ИП · ОСНО</div>
+                </div>
+                <div style="width:38px;height:38px;border-radius:50%;background:#fff;border:1px solid #E7DFCE;display:flex;align-items:center;justify-content:center;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3a5 5 0 015 5v3.2l1.6 3.4a1 1 0 01-.9 1.4H6.3a1 1 0 01-.9-1.4L7 11.2V8a5 5 0 015-5z" stroke="#23261E" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" stroke="#23261E" stroke-width="1.6" stroke-linecap="round"/></svg>
+                </div>
+              </div>
+
+              <div style="padding:10px 18px 0;">
+                <sc-if value="{{ variant1 }}" hint-placeholder-val="{{ true }}">
+                  <div style="background:linear-gradient(135deg,#1B6E48 0%,#26925C 55%,#37A96E 100%);border-radius:18px;padding:22px 20px;color:#fff;animation:slideUp 320ms ease both;">
+                    <div style="font:700 11px Inter;letter-spacing:.06em;text-transform:uppercase;opacity:0.75;">Налог к уплате · II квартал 2026</div>
+                    <div style="font:800 38px/1.1 'JetBrains Mono';margin-top:10px;letter-spacing:-0.5px;">148 320 ₽</div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;font:500 13px Inter;opacity:0.9;">
+                      <span>Срок оплаты: 28 июля 2026</span><span style="font-weight:700;">19 дней</span>
+                    </div>
+                    <div style="height:6px;border-radius:99px;background:rgba(255,255,255,0.22);margin-top:8px;overflow:hidden;"><div style="height:100%;width:30%;background:#fff;border-radius:99px;"></div></div>
+                    <div style="height:1px;background:rgba(255,255,255,0.18);margin:16px 0;"></div>
+                    <div style="display:flex;justify-content:space-between;">
+                      <div><div style="font:400 11.5px Inter;opacity:0.7;">Доход</div><div style="font:700 15px 'JetBrains Mono';margin-top:2px;">1 240 000 ₽</div></div>
+                      <div><div style="font:400 11.5px Inter;opacity:0.7;">Расход</div><div style="font:700 15px 'JetBrains Mono';margin-top:2px;">812 500 ₽</div></div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;">
+                      <div style="background:rgba(255,255,255,0.12);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;font:500 13px Inter;"><span>НДФЛ (13%)</span><span style="font-family:'JetBrains Mono';font-weight:700;">55 575 ₽</span></div>
+                      <div style="background:rgba(255,255,255,0.12);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;font:500 13px Inter;"><span>НДС к уплате</span><span style="font-family:'JetBrains Mono';font-weight:700;">92 745 ₽</span></div>
+                      <div style="background:rgba(255,255,255,0.12);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;font:500 13px Inter;"><span>Страховые взносы</span><span style="font-family:'JetBrains Mono';font-weight:700;">оплачено</span></div>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ variant2 }}" hint-placeholder-val="{{ false }}">
+                  <div style="background:#fff;border:1.5px solid #23261E;border-radius:6px;padding:20px;animation:slideUp 320ms ease both;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed #C9C0AC;padding-bottom:10px;">
+                      <div style="font:700 11px Inter;letter-spacing:.08em;text-transform:uppercase;color:#23261E;">Уведомление о налоге</div>
+                      <div style="font:700 10.5px Inter;color:#78715F;">II кв. 2026</div>
+                    </div>
+                    <div style="font:800 36px 'JetBrains Mono';color:#23261E;margin-top:14px;letter-spacing:-0.5px;">148 320 ₽</div>
+                    <div style="font:500 12.5px Inter;color:#78715F;margin-top:4px;">к уплате не позднее <b style="color:#23261E;">28.07.2026</b> · осталось 19 дней</div>
+                    <div style="margin-top:16px;display:flex;flex-direction:column;gap:9px;">
+                      <div style="display:flex;justify-content:space-between;font:500 13px Inter;color:#23261E;border-bottom:1px dotted #D8D0BE;padding-bottom:7px;"><span>Доход, всего</span><span style="font-family:'JetBrains Mono';">1 240 000 ₽</span></div>
+                      <div style="display:flex;justify-content:space-between;font:500 13px Inter;color:#23261E;border-bottom:1px dotted #D8D0BE;padding-bottom:7px;"><span>Расход, всего</span><span style="font-family:'JetBrains Mono';">812 500 ₽</span></div>
+                      <div style="display:flex;justify-content:space-between;font:500 13px Inter;color:#23261E;border-bottom:1px dotted #D8D0BE;padding-bottom:7px;"><span>НДФЛ, 13%</span><span style="font-family:'JetBrains Mono';">55 575 ₽</span></div>
+                      <div style="display:flex;justify-content:space-between;font:500 13px Inter;color:#23261E;border-bottom:1px dotted #D8D0BE;padding-bottom:7px;"><span>НДС к уплате</span><span style="font-family:'JetBrains Mono';">92 745 ₽</span></div>
+                      <div style="display:flex;justify-content:space-between;font:500 13px Inter;color:#23261E;"><span>Страховые взносы</span><span style="font-family:'JetBrains Mono';">оплачено</span></div>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ variant3 }}" hint-placeholder-val="{{ false }}">
+                  <div style="animation:slideUp 320ms ease both;">
+                    <div style="background:#fff;border-radius:16px;padding:18px;border:1px solid #E7DFCE;display:flex;align-items:center;gap:16px;">
+                      <svg width="72" height="72" viewBox="0 0 72 72" style="flex-shrink:0;"><circle cx="36" cy="36" r="30" fill="none" stroke="#F1E9DA" stroke-width="7"/><circle cx="36" cy="36" r="30" fill="none" stroke="#1F7A4F" stroke-width="7" stroke-linecap="round" stroke-dasharray="188.4" stroke-dashoffset="56.5" transform="rotate(-90 36 36)"/><text x="36" y="41" text-anchor="middle" font-size="18" font-weight="800" fill="#23261E" font-family="JetBrains Mono">19</text></svg>
+                      <div style="flex:1;">
+                        <div style="font:700 10.5px Inter;letter-spacing:.06em;text-transform:uppercase;color:#78715F;">К уплате · до 28.07.2026</div>
+                        <div style="font:800 26px 'JetBrains Mono';color:#23261E;margin-top:4px;">148 320 ₽</div>
+                      </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+                      <div style="background:#fff;border:1px solid #E7DFCE;border-radius:12px;padding:12px;"><div style="font:600 11px Inter;color:#78715F;">Доход</div><div style="font:700 16px 'JetBrains Mono';color:#1F7A4F;margin-top:4px;">1 240 000 ₽</div></div>
+                      <div style="background:#fff;border:1px solid #E7DFCE;border-radius:12px;padding:12px;"><div style="font:600 11px Inter;color:#78715F;">Расход</div><div style="font:700 16px 'JetBrains Mono';color:#C1591F;margin-top:4px;">812 500 ₽</div></div>
+                      <div style="background:#fff;border:1px solid #E7DFCE;border-radius:12px;padding:12px;"><div style="font:600 11px Inter;color:#78715F;">НДФЛ + НДС</div><div style="font:700 16px 'JetBrains Mono';color:#23261E;margin-top:4px;">148 320 ₽</div></div>
+                      <div style="background:#fff;border:1px solid #E7DFCE;border-radius:12px;padding:12px;"><div style="font:600 11px Inter;color:#78715F;">Взносы</div><div style="font:700 16px 'JetBrains Mono';color:#23261E;margin-top:4px;">оплачено</div></div>
+                    </div>
+                    <div style="background:#E3F1E7;border-radius:12px;padding:14px;margin-top:10px;">
+                      <div style="font:700 10.5px Inter;letter-spacing:.06em;text-transform:uppercase;color:#1F7A4F;">Оптимизация</div>
+                      <div style="font:500 13px Inter;color:#23261E;margin-top:4px;">На УСН 15% налог был бы <b>64 125 ₽</b> — экономия <b style="color:#1F7A4F;">84 195 ₽/кв.</b></div>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+
+              <div style="padding:14px 18px 0;">
+                <div style="background:#FBEADB;border:1px solid #EBCBA3;border-radius:12px;padding:13px 14px;display:flex;gap:10px;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px;"><path d="M12 3l10 18H2L12 3z" stroke="#C1591F" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10v4" stroke="#C1591F" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17" r="1" fill="#C1591F"/></svg>
+                  <div style="font:500 12.5px/1.5 Inter;color:#8A3F14;">Доход нарастающим итогом превысил 5 000 000 ₽ — с превышения НДФЛ удерживается по ставке 15%.</div>
+                </div>
+              </div>
+
+              <div style="padding:14px 18px 0;">
+                <div style="background:#FBEADB;border:1px solid #EBCBA3;border-radius:12px;padding:13px 14px;display:flex;gap:10px;align-items:center;cursor:pointer;" onClick="{{ openPeriodDetail }}">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><circle cx="12" cy="12" r="9" stroke="#C1591F" stroke-width="1.6"/><path d="M12 8v5" stroke="#C1591F" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="15.5" r="1" fill="#C1591F"/></svg>
+                  <div style="flex:1;font:500 12.5px/1.4 Inter;color:#8A3F14;">1 операция не размечена — уточните категорию</div>
+                  <svg width="7" height="12" viewBox="0 0 7 12"><path d="M1 1l5 5-5 5" stroke="#8A3F14" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:10px;padding:16px 18px 0;">
+                <div style="flex:1;background:#fff;border:1px solid #E7DFCE;border-radius:12px;padding:12px 14px;">
+                  <div style="font:700 10.5px Inter;letter-spacing:.06em;text-transform:uppercase;color:#78715F;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7-7 7 7" stroke="#1F7A4F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Доходы</div>
+                  <div style="font:700 18px 'JetBrains Mono';color:#1F7A4F;margin-top:6px;">1 240 000 ₽</div>
+                </div>
+                <div style="flex:1;background:#fff;border:1px solid #E7DFCE;border-radius:12px;padding:12px 14px;">
+                  <div style="font:700 10.5px Inter;letter-spacing:.06em;text-transform:uppercase;color:#78715F;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12l7 7 7-7" stroke="#C1591F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Расходы</div>
+                  <div style="font:700 18px 'JetBrains Mono';color:#C1591F;margin-top:6px;">812 500 ₽</div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:10px;padding:14px 18px 0;">
+                <button onClick="{{ openConnectedBanks }}" style="flex:1;border:1.5px solid #23261E;background:#fff;color:#23261E;font:600 13.5px Inter;padding:12px 0;border-radius:11px;cursor:pointer;">Подключить банк</button>
+                <button onClick="{{ openAddTransaction }}" style="flex:1;border:none;background:#1F7A4F;color:#fff;font:600 13.5px Inter;padding:12px 0;border-radius:11px;cursor:pointer;">+ Операция</button>
+              </div>
+
+              <div style="padding:20px 18px 0;">
+                <div style="font:700 13px Inter;color:#23261E;margin-bottom:10px;">Доходы и расходы, 6 месяцев</div>
+                <div style="background:#fff;border:1px solid #E7DFCE;border-radius:14px;padding:16px 14px 10px;display:flex;align-items:flex-end;justify-content:space-between;gap:6px;height:118px;">
+                  <sc-for list="{{ chartBars }}" as="bar" hint-placeholder-count="6">
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
+                      <div style="display:flex;align-items:flex-end;gap:2px;height:76px;">
+                        <div style="width:7px;height:{{ bar.incomeH }}px;background:#1F7A4F;border-radius:3px 3px 0 0;"></div>
+                        <div style="width:7px;height:{{ bar.expenseH }}px;background:#F1C79A;border-radius:3px 3px 0 0;"></div>
+                      </div>
+                      <div style="font:600 10px Inter;color:#9C9484;">{{ bar.label }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div style="padding:14px 18px 0;">
+                <div style="background:#F1E9DA;border-radius:12px;padding:14px;display:flex;gap:12px;">
+                  <div style="width:32px;height:32px;border-radius:9px;background:#E3F1E7;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.5.4.8 1 .8 1.7v.4h5.4v-.4c0-.7.3-1.3.8-1.7A6 6 0 0012 3z" stroke="#1F7A4F" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+                  <div>
+                    <div style="font:700 10.5px Inter;letter-spacing:.06em;text-transform:uppercase;color:#78715F;">Совет</div>
+                    <div style="font:500 13px/1.5 Inter;color:#23261E;margin-top:3px;">Перейдите на УСН 15%, чтобы снизить налоговую нагрузку — расчёт экономии в разделе «Налоговый режим».</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="padding:20px 18px 90px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                  <div style="font:700 13px Inter;color:#23261E;">Последние операции</div>
+                  <a href="javascript:void(0)" onClick="{{ openPeriodDetail }}" style="font:600 12.5px Inter;text-decoration:none;">Все</a>
+                </div>
+                <div style="background:#fff;border:1px solid #E7DFCE;border-radius:14px;overflow:hidden;">
+                  <sc-for list="{{ recentTx }}" as="tx" hint-placeholder-count="4">
+                    <div style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid #F1EDE1;">
+                      <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:{{ tx.iconBg }};">
+                        <sc-if value="{{ tx.isIncome }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7-7 7 7" stroke="#1F7A4F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>
+                        <sc-if value="{{ tx.isExpense }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12l7 7 7-7" stroke="#78715F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>
+                        <sc-if value="{{ tx.isUnknown }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#C1591F" stroke-width="1.8"/><path d="M12 16v.01M12 8a2 2 0 00-2 2c0 1 2 1 2 2.5" stroke="#C1591F" stroke-width="1.8" stroke-linecap="round"/></svg></sc-if>
+                      </div>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font:600 13.5px Inter;color:#23261E;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ tx.name }}</div>
+                        <div style="font:400 12px Inter;color:#9C9484;margin-top:2px;">{{ tx.date }}</div>
+                      </div>
+                      <div style="font:700 13.5px 'JetBrains Mono';color:{{ tx.amountColor }};flex-shrink:0;">{{ tx.amount }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ tabHistory }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:6px 18px 16px;animation:fadeIn 260ms ease both;">
+                <div style="font:800 24px Inter;color:#23261E;">История операций</div>
+              </div>
+              <div style="padding:0 18px 90px;display:flex;flex-direction:column;gap:12px;">
+                <sc-for list="{{ periods }}" as="p" hint-placeholder-count="4">
+                  <button onClick="{{ p.open }}" style="text-align:left;border:1px solid #E7DFCE;background:#fff;border-radius:14px;padding:16px;cursor:pointer;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                      <div style="font:700 14.5px Inter;color:#23261E;">{{ p.month }}</div>
+                      <div style="font:700 14px 'JetBrains Mono';color:#1F7A4F;">{{ p.income }}</div>
+                    </div>
+                    <div style="display:flex;gap:18px;margin-top:10px;">
+                      <div><div style="font:500 11px Inter;color:#9C9484;">Налог</div><div style="font:600 13px 'JetBrains Mono';color:#23261E;margin-top:2px;">{{ p.tax }}</div></div>
+                      <div><div style="font:500 11px Inter;color:#9C9484;">Взносы</div><div style="font:600 13px 'JetBrains Mono';color:#23261E;margin-top:2px;">{{ p.contributions }}</div></div>
+                      <div><div style="font:500 11px Inter;color:#9C9484;">Операций</div><div style="font:600 13px 'JetBrains Mono';color:#23261E;margin-top:2px;">{{ p.count }}</div></div>
+                    </div>
+                    <div style="height:6px;border-radius:99px;background:#F1E9DA;margin-top:12px;overflow:hidden;"><div style="height:100%;width:{{ p.ratio }}%;background:#1F7A4F;border-radius:99px;"></div></div>
+                    <div style="font:500 11px Inter;color:#9C9484;margin-top:5px;">Доля налога от дохода: {{ p.ratio }}%</div>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ tabStatements }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:6px 18px 16px;display:flex;justify-content:space-between;align-items:center;animation:fadeIn 260ms ease both;">
+                <div style="font:800 24px Inter;color:#23261E;">Выписки</div>
+                <button style="width:38px;height:38px;border-radius:11px;border:1px solid #E7DFCE;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 21V9M6 13l6-6 6 6" stroke="#23261E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 21h16" stroke="#23261E" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+              </div>
+              <div style="padding:0 18px 90px;display:flex;flex-direction:column;gap:12px;">
+                <sc-for list="{{ statements }}" as="st" hint-placeholder-count="2">
+                  <div style="border:1px solid #E7DFCE;background:#fff;border-radius:14px;padding:14px 16px;">
+                    <div style="display:flex;gap:12px;align-items:center;">
+                      <div style="width:38px;height:38px;border-radius:10px;background:#F1E9DA;flex-shrink:0;display:flex;align-items:center;justify-content:center;font:700 10.5px Inter;color:#78715F;text-transform:uppercase;">{{ st.type }}</div>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font:600 13.5px Inter;color:#23261E;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ st.name }}</div>
+                        <div style="font:400 12px Inter;color:#9C9484;margin-top:2px;">{{ st.date }} · {{ st.count }} операций</div>
+                      </div>
+                    </div>
+                    <div style="height:1px;background:#F1EDE1;margin:12px 0;"></div>
+                    <div style="display:flex;justify-content:space-between;">
+                      <div><div style="font:500 11px Inter;color:#9C9484;">Доходы</div><div style="font:700 13.5px 'JetBrains Mono';color:#1F7A4F;margin-top:2px;">{{ st.income }}</div></div>
+                      <div><div style="font:500 11px Inter;color:#9C9484;">Расходы</div><div style="font:700 13.5px 'JetBrains Mono';color:#C1591F;margin-top:2px;">{{ st.expense }}</div></div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ tabSettings }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:6px 18px 16px;animation:fadeIn 260ms ease both;">
+                <div style="font:800 24px Inter;color:#23261E;">Настройки</div>
+              </div>
+              <div style="padding:0 18px 8px;">
+                <div style="font:700 10.5px Inter;letter-spacing:.06em;text-transform:uppercase;color:#9C9484;margin-bottom:8px;">Аккаунт</div>
+                <div style="border:1px solid #E7DFCE;background:#fff;border-radius:14px;overflow:hidden;">
+                  <button onClick="{{ openProfile }}" style="width:100%;text-align:left;border:none;background:none;padding:14px 16px;font:600 14px Inter;color:#23261E;cursor:pointer;border-bottom:1px solid #F1EDE1;display:flex;justify-content:space-between;align-items:center;">Профиль<svg width="7" height="12" viewBox="0 0 7 12"><path d="M1 1l5 5-5 5" stroke="#9C9484" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                  <button onClick="{{ openTaxRegime }}" style="width:100%;text-align:left;border:none;background:none;padding:14px 16px;font:600 14px Inter;color:#23261E;cursor:pointer;border-bottom:1px solid #F1EDE1;display:flex;justify-content:space-between;align-items:center;">Налоговый режим<span style="display:flex;align-items:center;gap:6px;font:500 12.5px Inter;color:#9C9484;">ОСНО<svg width="7" height="12" viewBox="0 0 7 12"><path d="M1 1l5 5-5 5" stroke="#9C9484" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+                  <button onClick="{{ openConnectedBanks }}" style="width:100%;text-align:left;border:none;background:none;padding:14px 16px;font:600 14px Inter;color:#23261E;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">Подключённые банки<span style="display:flex;align-items:center;gap:6px;font:500 12.5px Inter;color:#9C9484;">2<svg width="7" height="12" viewBox="0 0 7 12"><path d="M1 1l5 5-5 5" stroke="#9C9484" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+                </div>
+              </div>
+              <div style="padding:20px 18px 8px;">
+                <div style="font:700 10.5px Inter;letter-spacing:.06em;text-transform:uppercase;color:#9C9484;margin-bottom:8px;">Приложение</div>
+                <div style="border:1px solid #E7DFCE;background:#fff;border-radius:14px;overflow:hidden;">
+                  <div style="padding:14px 16px;font:600 14px Inter;color:#23261E;border-bottom:1px solid #F1EDE1;display:flex;justify-content:space-between;align-items:center;">Уведомления<span style="width:40px;height:24px;border-radius:99px;background:#1F7A4F;position:relative;"><span style="position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:#fff;"></span></span></div>
+                  <div style="padding:14px 16px;font:600 14px Inter;color:#23261E;display:flex;justify-content:space-between;align-items:center;">Экспорт данных (ФНС)<svg width="7" height="12" viewBox="0 0 7 12"><path d="M1 1l5 5-5 5" stroke="#9C9484" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                </div>
+              </div>
+              <div style="padding:24px 18px 90px;">
+                <button style="width:100%;border:1px solid #EBCBA3;background:#FBEADB;color:#C1591F;font:600 14px Inter;padding:13px 0;border-radius:12px;cursor:pointer;">Сбросить данные</button>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,0.92);backdrop-filter:blur(10px);border-top:1px solid #E7DFCE;display:flex;padding:8px 8px 22px;">
+            <button onClick="{{ jumpTabBDashboard }}" style="flex:1;border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:{{ tabColorDashboard }};">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M3 10L12 3l9 7" stroke="{{ tabColorDashboard }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9v11h14V9" stroke="{{ tabColorDashboard }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span style="font:600 10.5px Inter;">Главная</span>
+            </button>
+            <button onClick="{{ jumpTabBHistory }}" style="flex:1;border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:{{ tabColorHistory }};">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="{{ tabColorHistory }}" stroke-width="1.8"/><path d="M12 7v5l3.5 2" stroke="{{ tabColorHistory }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span style="font:600 10.5px Inter;">История</span>
+            </button>
+            <button onClick="{{ jumpTabBStatements }}" style="flex:1;border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:{{ tabColorStatements }};">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l3 3v15H6z" stroke="{{ tabColorStatements }}" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12h6M9 16h6" stroke="{{ tabColorStatements }}" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <span style="font:600 10.5px Inter;">Выписки</span>
+            </button>
+            <button onClick="{{ jumpTabBSettings }}" style="flex:1;border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:{{ tabColorSettings }};">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="{{ tabColorSettings }}" stroke-width="1.8"/><path d="M19.4 13a7.6 7.6 0 000-2l2-1.5-2-3.4-2.4.7a7.4 7.4 0 00-1.7-1L15 3h-4l-.3 2.8a7.4 7.4 0 00-1.7 1l-2.4-.7-2 3.4L6.6 11a7.6 7.6 0 000 2l-2 1.5 2 3.4 2.4-.7c.5.4 1 .8 1.7 1L11 21h4l.3-2.8c.6-.2 1.2-.6 1.7-1l2.4.7 2-3.4-2-1.5z" stroke="{{ tabColorSettings }}" stroke-width="1.5" stroke-linejoin="round"/></svg>
+              <span style="font:600 10.5px Inter;">Настройки</span>
+            </button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ overlayPeriodDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:#EFECE3;z-index:20;animation:slideInRight 300ms cubic-bezier(0.22,1,0.36,1) both;display:flex;flex-direction:column;">
+          <div style="padding:62px 18px 12px;display:flex;align-items:center;gap:12px;background:#fff;border-bottom:1px solid #E7DFCE;">
+            <button onClick="{{ pop }}" style="border:none;background:#F1E9DA;width:34px;height:34px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="8" height="14" viewBox="0 0 8 14"><path d="M7 1L1 7l6 6" stroke="#23261E" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div style="font:800 18px Inter;color:#23261E;">Июнь 2026</div>
+          </div>
+          <div style="flex:1;overflow:auto;">
+            <div style="display:flex;gap:10px;padding:16px 18px 0;">
+              <div style="flex:1;background:#fff;border:1px solid #E7DFCE;border-radius:12px;padding:12px;"><div style="font:600 11px Inter;color:#78715F;">Доход</div><div style="font:700 15px 'JetBrains Mono';color:#1F7A4F;margin-top:4px;">1 240 000 ₽</div></div>
+              <div style="flex:1;background:#fff;border:1px solid #E7DFCE;border-radius:12px;padding:12px;"><div style="font:600 11px Inter;color:#78715F;">Расход</div><div style="font:700 15px 'JetBrains Mono';color:#C1591F;margin-top:4px;">812 500 ₽</div></div>
+              <div style="flex:1;background:#fff;border:1px solid #E7DFCE;border-radius:12px;padding:12px;"><div style="font:600 11px Inter;color:#78715F;">Налог</div><div style="font:700 15px 'JetBrains Mono';color:#23261E;margin-top:4px;">148 320 ₽</div></div>
+            </div>
+            <div style="display:flex;gap:8px;padding:16px 18px 0;overflow:auto;">
+              <sc-for list="{{ filterChips }}" as="fc" hint-placeholder-count="3">
+                <button onClick="{{ fc.select }}" style="border:1.5px solid {{ fc.border }};background:{{ fc.bg }};color:{{ fc.color }};font:600 12.5px Inter;padding:8px 14px;border-radius:99px;cursor:pointer;white-space:nowrap;">{{ fc.label }}</button>
+              </sc-for>
+            </div>
+            <div style="padding:16px 18px 32px;">
+              <div style="background:#fff;border:1px solid #E7DFCE;border-radius:14px;overflow:hidden;">
+                <sc-for list="{{ periodTx }}" as="tx" hint-placeholder-count="6">
+                  <div style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid #F1EDE1;border-left:{{ tx.reviewBorder }};">
+                    <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:{{ tx.iconBg }};">
+                      <sc-if value="{{ tx.isIncome }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7-7 7 7" stroke="#1F7A4F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>
+                      <sc-if value="{{ tx.isExpense }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12l7 7 7-7" stroke="#78715F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>
+                      <sc-if value="{{ tx.isUnknown }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#C1591F" stroke-width="1.8"/><path d="M12 16v.01M12 8a2 2 0 00-2 2c0 1 2 1 2 2.5" stroke="#C1591F" stroke-width="1.8" stroke-linecap="round"/></svg></sc-if>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                      <div style="font:600 13.5px Inter;color:#23261E;">{{ tx.name }}</div>
+                      <div style="font:400 12px Inter;color:#9C9484;margin-top:2px;">{{ tx.date }}</div>
+                    </div>
+                    <div style="font:700 13.5px 'JetBrains Mono';color:{{ tx.amountColor }};flex-shrink:0;">{{ tx.amount }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ overlayAddTransaction }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:#fff;z-index:20;animation:slideInRight 300ms cubic-bezier(0.22,1,0.36,1) both;display:flex;flex-direction:column;">
+          <div style="padding:62px 18px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E7DFCE;">
+            <button onClick="{{ pop }}" style="border:none;background:#F1E9DA;width:34px;height:34px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="8" height="14" viewBox="0 0 8 14"><path d="M7 1L1 7l6 6" stroke="#23261E" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div style="font:800 18px Inter;color:#23261E;">Новая операция</div>
+          </div>
+          <div style="flex:1;overflow:auto;padding:24px 18px;">
+            <div style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;">
+              <button onClick="{{ setAddTypeIncome }}" style="border:1.5px solid {{ addIncomeBorder }};background:{{ addIncomeBg }};color:{{ addIncomeColor }};font:700 13px Inter;padding:9px 18px;border-radius:99px;cursor:pointer;">Доход</button>
+              <button onClick="{{ setAddTypeExpense }}" style="border:1.5px solid {{ addExpenseBorder }};background:{{ addExpenseBg }};color:{{ addExpenseColor }};font:700 13px Inter;padding:9px 18px;border-radius:99px;cursor:pointer;">Расход</button>
+            </div>
+            <div style="text-align:center;background:#F7F4EC;border-radius:16px;padding:24px 12px;margin-bottom:20px;">
+              <div style="font:600 11px Inter;color:#9C9484;text-transform:uppercase;letter-spacing:.06em;">Сумма</div>
+              <input value="{{ addAmount }}" onChange="{{ setAddAmount }}" style="width:100%;border:none;background:none;text-align:center;font:800 34px 'JetBrains Mono';color:#23261E;margin-top:8px;outline:none;" />
+            </div>
+            <div style="font:600 11px Inter;color:#9C9484;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Категория</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+              <sc-for list="{{ addCategories }}" as="cat" hint-placeholder-count="4">
+                <button onClick="{{ cat.select }}" style="border:1.5px solid {{ cat.border }};background:{{ cat.bg }};color:{{ cat.color }};font:600 13px Inter;padding:9px 15px;border-radius:99px;cursor:pointer;">{{ cat.name }}</button>
+              </sc-for>
+            </div>
+            <div style="font:600 11px Inter;color:#9C9484;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Дата</div>
+            <div style="background:#F1E9DA;border-radius:12px;padding:13px 14px;display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="#78715F" stroke-width="1.6"/><path d="M3 9h18M8 3v4M16 3v4" stroke="#78715F" stroke-width="1.6" stroke-linecap="round"/></svg>
+              <span style="font:600 14px Inter;color:#23261E;">9 июля 2026</span>
+            </div>
+            <div style="font:600 11px Inter;color:#9C9484;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Описание</div>
+            <textarea placeholder="Комментарий к операции" style="width:100%;height:70px;border:1px solid #E7DFCE;border-radius:12px;padding:12px;font:500 13.5px Inter;color:#23261E;resize:none;outline:none;"></textarea>
+          </div>
+          <div style="padding:12px 18px 32px;border-top:1px solid #E7DFCE;">
+            <button onClick="{{ saveTransaction }}" style="width:100%;border:none;background:#1F7A4F;color:#fff;font:700 15px Inter;padding:15px 0;border-radius:12px;cursor:pointer;">{{ saveTxLabel }}</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ overlayProfile }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:#fff;z-index:20;animation:slideInRight 300ms cubic-bezier(0.22,1,0.36,1) both;display:flex;flex-direction:column;">
+          <div style="padding:62px 18px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E7DFCE;">
+            <button onClick="{{ pop }}" style="border:none;background:#F1E9DA;width:34px;height:34px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="8" height="14" viewBox="0 0 8 14"><path d="M7 1L1 7l6 6" stroke="#23261E" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div style="font:800 18px Inter;color:#23261E;">Профиль</div>
+          </div>
+          <div style="flex:1;overflow:auto;padding:20px 18px;display:flex;flex-direction:column;gap:14px;">
+            <div><div style="font:600 11px Inter;color:#9C9484;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Имя</div><div style="border:1px solid #E7DFCE;border-radius:11px;padding:13px 14px;font:600 14px Inter;color:#23261E;background:#F7F4EC;">Алексей Воронцов</div></div>
+            <div><div style="font:600 11px Inter;color:#9C9484;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Телефон</div><div style="border:1px solid #E7DFCE;border-radius:11px;padding:13px 14px;font:600 14px Inter;color:#23261E;background:#F7F4EC;">+7 903 123-45-67</div></div>
+            <div><div style="font:600 11px Inter;color:#9C9484;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">ИНН</div><div style="border:1px solid #E7DFCE;border-radius:11px;padding:13px 14px;font:600 14px 'JetBrains Mono';color:#23261E;background:#F7F4EC;">770812345678</div></div>
+            <div><div style="font:600 11px Inter;color:#9C9484;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">ОГРНИП</div><div style="border:1px solid #E7DFCE;border-radius:11px;padding:13px 14px;font:600 14px 'JetBrains Mono';color:#23261E;background:#F7F4EC;">321774600098765</div></div>
+          </div>
+          <div style="padding:12px 18px 32px;border-top:1px solid #E7DFCE;">
+            <button onClick="{{ saveProfile }}" style="width:100%;border:none;background:#1F7A4F;color:#fff;font:700 15px Inter;padding:15px 0;border-radius:12px;cursor:pointer;">{{ saveProfileLabel }}</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ overlayTaxRegime }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:#EFECE3;z-index:20;animation:slideInRight 300ms cubic-bezier(0.22,1,0.36,1) both;display:flex;flex-direction:column;">
+          <div style="padding:62px 18px 12px;display:flex;align-items:center;gap:12px;background:#fff;border-bottom:1px solid #E7DFCE;">
+            <button onClick="{{ pop }}" style="border:none;background:#F1E9DA;width:34px;height:34px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="8" height="14" viewBox="0 0 8 14"><path d="M7 1L1 7l6 6" stroke="#23261E" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div style="font:800 18px Inter;color:#23261E;">Налоговый режим</div>
+          </div>
+          <div style="flex:1;overflow:auto;padding:18px;">
+            <div style="background:#fff;border:1px solid #E7DFCE;border-radius:14px;padding:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                  <div style="font:700 10.5px Inter;letter-spacing:.06em;text-transform:uppercase;color:#78715F;">Текущий режим</div>
+                  <div style="font:800 18px Inter;color:#23261E;margin-top:6px;">ОСНО</div>
+                  <div style="font:400 12.5px Inter;color:#78715F;margin-top:2px;">Общая система налогообложения</div>
+                </div>
+                <button onClick="{{ openTaxRegimeSelect }}" style="border:none;background:none;color:#1F7A4F;font:700 13px Inter;cursor:pointer;">Изменить</button>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
+              <div style="background:#fff;border:1px solid #E7DFCE;border-radius:12px;padding:13px;font:500 13px/1.5 Inter;color:#23261E;">Ставка НДФЛ — <b>13%</b> (15% с дохода свыше 5 млн ₽ в год)</div>
+              <div style="background:#fff;border:1px solid #E7DFCE;border-radius:12px;padding:13px;font:500 13px/1.5 Inter;color:#23261E;">Ставка НДС — <b>20%</b>, право на вычет входящего НДС сохраняется</div>
+              <div style="background:#fff;border:1px solid #E7DFCE;border-radius:12px;padding:13px;font:500 13px/1.5 Inter;color:#23261E;">Сотрудников: <b>3</b> · требуется полный бухучёт</div>
+            </div>
+            <button onClick="{{ openTaxRegimeDetails }}" style="width:100%;border:1.5px solid #23261E;background:#fff;color:#23261E;font:700 14px Inter;padding:13px 0;border-radius:12px;cursor:pointer;margin-top:16px;">Внести изменения</button>
+            <div style="background:#E3F1E7;border-radius:12px;padding:14px;margin-top:20px;">
+              <div style="font:700 10.5px Inter;letter-spacing:.06em;text-transform:uppercase;color:#1F7A4F;">Оптимизация</div>
+              <div style="font:500 13px/1.5 Inter;color:#23261E;margin-top:4px;">При переходе на УСН 15% («Доходы минус расходы») налог за квартал снизился бы до <b>64 125 ₽</b> — экономия <b style="color:#1F7A4F;">84 195 ₽</b>.</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ overlayTaxRegimeSelect }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:#fff;z-index:21;animation:slideInRight 300ms cubic-bezier(0.22,1,0.36,1) both;display:flex;flex-direction:column;">
+          <div style="padding:62px 18px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E7DFCE;">
+            <button onClick="{{ pop }}" style="border:none;background:#F1E9DA;width:34px;height:34px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="8" height="14" viewBox="0 0 8 14"><path d="M7 1L1 7l6 6" stroke="#23261E" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div style="font:800 18px Inter;color:#23261E;">Смена режима</div>
+          </div>
+          <div style="flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:10px;">
+            <sc-for list="{{ regimeChoices }}" as="fam" hint-placeholder-count="3">
+              <div style="font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9C9484;margin:6px 0 2px;">{{ fam.label }}</div>
+              <sc-for list="{{ fam.options }}" as="opt" hint-placeholder-count="1">
+                <button onClick="{{ opt.selectAndBack }}" style="text-align:left;border:1.5px solid {{ opt.border }};background:{{ opt.bg }};border-radius:12px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;">
+                  <div style="width:20px;height:20px;border-radius:50%;border:2px solid {{ opt.dotBorder }};background:{{ opt.dotBg }};flex-shrink:0;"></div>
+                  <div style="flex:1;"><div style="font:600 14.5px Inter;color:#23261E;">{{ opt.name }}</div><div style="font:400 12.5px Inter;color:#78715F;margin-top:2px;">{{ opt.desc }}</div></div>
+                  <div style="font:700 13px 'JetBrains Mono';color:#1F7A4F;">{{ opt.rate }}</div>
+                </button>
+              </sc-for>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ overlayTaxRegimeDetails }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:#fff;z-index:21;animation:slideInRight 300ms cubic-bezier(0.22,1,0.36,1) both;display:flex;flex-direction:column;">
+          <div style="padding:62px 18px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E7DFCE;">
+            <button onClick="{{ pop }}" style="border:none;background:#F1E9DA;width:34px;height:34px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="8" height="14" viewBox="0 0 8 14"><path d="M7 1L1 7l6 6" stroke="#23261E" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div style="font:800 18px Inter;color:#23261E;">Настройки режима · ОСНО</div>
+          </div>
+          <div style="flex:1;overflow:auto;padding:20px 18px;display:flex;flex-direction:column;gap:16px;">
+            <div>
+              <div style="font:600 11px Inter;color:#9C9484;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Сотрудники</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;border:1px solid #E7DFCE;border-radius:12px;padding:10px 14px;">
+                <button onClick="{{ decEmployees }}" style="width:30px;height:30px;border-radius:8px;border:1px solid #E7DFCE;background:#F1E9DA;font:700 16px Inter;cursor:pointer;">−</button>
+                <span style="font:700 16px 'JetBrains Mono';color:#23261E;">{{ employeesCount }}</span>
+                <button onClick="{{ incEmployees }}" style="width:30px;height:30px;border-radius:8px;border:1px solid #E7DFCE;background:#F1E9DA;font:700 16px Inter;cursor:pointer;">+</button>
+              </div>
+            </div>
+            <div>
+              <div style="font:600 11px Inter;color:#9C9484;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Ставка НДС</div>
+              <div style="display:flex;gap:8px;">
+                <sc-for list="{{ vatOptions }}" as="v" hint-placeholder-count="3">
+                  <button onClick="{{ v.select }}" style="flex:1;border:1.5px solid {{ v.border }};background:{{ v.bg }};color:{{ v.color }};font:700 13px Inter;padding:11px 0;border-radius:10px;cursor:pointer;">{{ v.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <button onClick="{{ toggleVatExempt }}" style="display:flex;align-items:center;gap:10px;border:1px solid #E7DFCE;background:#F7F4EC;border-radius:12px;padding:13px 14px;cursor:pointer;text-align:left;">
+              <div style="width:20px;height:20px;border-radius:6px;border:2px solid {{ vatExemptBorder }};background:{{ vatExemptBg }};flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                <sc-if value="{{ vatExempt }}"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 6l3.5 3.5L11 2" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>
+              </div>
+              <div style="font:500 13px/1.4 Inter;color:#23261E;">Освобождение от НДС (ст. 145 НК РФ)</div>
+            </button>
+          </div>
+          <div style="padding:12px 18px 32px;border-top:1px solid #E7DFCE;">
+            <button onClick="{{ saveRegimeDetails }}" style="width:100%;border:none;background:#1F7A4F;color:#fff;font:700 15px Inter;padding:15px 0;border-radius:12px;cursor:pointer;">{{ saveRegimeLabel }}</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ overlayConnectedBanks }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:#EFECE3;z-index:20;animation:slideInRight 300ms cubic-bezier(0.22,1,0.36,1) both;display:flex;flex-direction:column;">
+          <div style="padding:62px 18px 12px;display:flex;align-items:center;gap:12px;background:#fff;border-bottom:1px solid #E7DFCE;">
+            <button onClick="{{ pop }}" style="border:none;background:#F1E9DA;width:34px;height:34px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="8" height="14" viewBox="0 0 8 14"><path d="M7 1L1 7l6 6" stroke="#23261E" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div style="font:800 18px Inter;color:#23261E;">Подключённые банки</div>
+          </div>
+          <div style="flex:1;overflow:auto;padding:18px;">
+            <div style="background:#fff;border:1px solid #E7DFCE;border-radius:14px;overflow:hidden;">
+              <sc-for list="{{ connectedBanks }}" as="bk" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #F1EDE1;">
+                  <div style="width:38px;height:38px;border-radius:10px;background:{{ bk.color }};flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font:700 14px Inter;">{{ bk.initial }}</div>
+                  <div style="flex:1;"><div style="font:600 14px Inter;color:#23261E;">{{ bk.name }}</div><div style="font:400 12px Inter;color:#1F7A4F;margin-top:2px;">{{ bk.status }}</div></div>
+                  <button style="border:none;background:none;color:#C1591F;font:600 12.5px Inter;cursor:pointer;">Отключить</button>
+                </div>
+              </sc-for>
+            </div>
+            <button onClick="{{ openBankSelect }}" style="width:100%;border:1.5px dashed #9C9484;background:none;color:#23261E;font:600 14px Inter;padding:14px 0;border-radius:12px;cursor:pointer;margin-top:14px;">+ Добавить банк</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ overlayBankSelect }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:#fff;z-index:21;animation:slideInRight 300ms cubic-bezier(0.22,1,0.36,1) both;display:flex;flex-direction:column;">
+          <div style="padding:62px 18px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E7DFCE;">
+            <button onClick="{{ pop }}" style="border:none;background:#F1E9DA;width:34px;height:34px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="8" height="14" viewBox="0 0 8 14"><path d="M7 1L1 7l6 6" stroke="#23261E" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div style="font:800 18px Inter;color:#23261E;">Подключение банка</div>
+          </div>
+          <div style="flex:1;overflow:auto;padding:18px;">
+            <div style="background:#E3F1E7;border-radius:12px;padding:13px 14px;display:flex;gap:10px;margin-bottom:16px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><path d="M12 3l8 3.5v5c0 5-3.4 8.7-8 9.5-4.6-.8-8-4.5-8-9.5v-5L12 3z" stroke="#1F7A4F" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="#1F7A4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <div style="font:500 12.5px/1.5 Inter;color:#145C3A;">Данные передаются по защищённому protoколу, доступ можно отозвать в любой момент.</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <sc-for list="{{ bankOptions }}" as="bo" hint-placeholder-count="4">
+                <button onClick="{{ bo.select }}" style="display:flex;align-items:center;gap:12px;border:1px solid #E7DFCE;background:#fff;border-radius:12px;padding:13px 14px;cursor:pointer;text-align:left;">
+                  <div style="width:36px;height:36px;border-radius:10px;background:{{ bo.color }};display:flex;align-items:center;justify-content:center;color:#fff;font:700 13px Inter;">{{ bo.initial }}</div>
+                  <div style="flex:1;font:600 14px Inter;color:#23261E;">{{ bo.name }}</div>
+                  <svg width="7" height="12" viewBox="0 0 7 12"><path d="M1 1l5 5-5 5" stroke="#9C9484" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ overlayBankConsent }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:#fff;z-index:22;animation:slideInRight 300ms cubic-bezier(0.22,1,0.36,1) both;display:flex;flex-direction:column;">
+          <div style="padding:62px 18px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E7DFCE;">
+            <button onClick="{{ pop }}" style="border:none;background:#F1E9DA;width:34px;height:34px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="8" height="14" viewBox="0 0 8 14"><path d="M7 1L1 7l6 6" stroke="#23261E" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div style="font:800 18px Inter;color:#23261E;">{{ consentBankName }}</div>
+          </div>
+          <div style="flex:1;overflow:auto;padding:24px 18px;display:flex;flex-direction:column;align-items:center;text-align:center;">
+            <div style="width:64px;height:64px;border-radius:16px;background:{{ consentBankColor }};display:flex;align-items:center;justify-content:center;color:#fff;font:700 22px Inter;margin-bottom:16px;">{{ consentBankInitial }}</div>
+            <div style="font:700 15px Inter;color:#23261E;">Согласие на получение данных</div>
+            <div style="font:400 13px/1.6 Inter;color:#78715F;margin-top:8px;">Приложение получит доступ к операциям по счетам ИП за последние 12 месяцев для расчёта налога. Согласие действует 12 месяцев и может быть отозвано в любой момент.</div>
+          </div>
+          <div style="padding:12px 18px 32px;border-top:1px solid #E7DFCE;">
+            <button onClick="{{ startBankLoading }}" style="width:100%;border:none;background:#1F7A4F;color:#fff;font:700 15px Inter;padding:15px 0;border-radius:12px;cursor:pointer;">Подтвердить и подключить</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ overlayBankLoading }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:#fff;z-index:23;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
+          <sc-if value="{{ bankNotDone }}">
+            <div style="width:56px;height:56px;border-radius:50%;border:4px solid #E3F1E7;border-top-color:#1F7A4F;animation:spin 900ms linear infinite;"></div>
+          </sc-if>
+          <sc-if value="{{ bankDone }}">
+            <div style="width:64px;height:64px;border-radius:50%;background:#1F7A4F;display:flex;align-items:center;justify-content:center;animation:popIn 320ms ease both;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M4 12l6 6L20 6" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          </sc-if>
+          <div style="font:600 14.5px Inter;color:#23261E;">{{ bankLoadingLabel }}</div>
+        </div>
+      </sc-if>
+
+    </div>
+  </x-import>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    phase: 'onboarding',
+    onbIndex: 0,
+    taxStatus: 'ip',
+    selectedRegime: 'osno',
+    mainTab: 'dashboard',
+    dashboardVariant: 1,
+    overlayStack: [],
+    filterChip: 'all',
+    bankLoadingStep: 0,
+    bankConsentTarget: null,
+    addType: 'expense',
+    addAmount: '12 450',
+    addCategory: 'Услуги',
+    employeesCount: 3,
+    vatRate: '20',
+    vatExempt: false,
+    profileSaved: false,
+    regimeSaved: false,
+    txSaved: false,
+  };
+
+  componentWillUnmount() {
+    if (this._bankInterval) clearInterval(this._bankInterval);
+  }
+
+  push(name) { this.setState(s => ({ overlayStack: [...s.overlayStack, name] })); }
+  pop = () => { this.setState(s => ({ overlayStack: s.overlayStack.slice(0, -1) })); };
+  popAll() { this.setState({ overlayStack: [] }); }
+
+  goOnboarding = () => this.setState({ phase: 'onboarding', onbIndex: 0, overlayStack: [] });
+  goTaxMode = () => this.setState({ phase: 'taxMode', overlayStack: [] });
+  onbSkip = () => this.setState({ phase: 'taxMode' });
+  onbNext = () => {
+    if (this.state.onbIndex < 2) this.setState(s => ({ onbIndex: s.onbIndex + 1 }));
+    else this.setState({ phase: 'taxMode' });
+  };
+  chooseSelfEmployed = () => this.setState({ taxStatus: 'selfEmployed', selectedRegime: 'npd' });
+  chooseIp = () => this.setState({ taxStatus: 'ip', selectedRegime: 'osno' });
+  selectRegime(id) { this.setState({ selectedRegime: id }); }
+  continueToMain = () => this.setState({ phase: 'main', mainTab: 'dashboard', overlayStack: [] });
+
+  jumpTab(tab) { return () => this.setState({ phase: 'main', mainTab: tab, overlayStack: [] }); }
+  jumpTabB(tab) { return () => this.setState({ mainTab: tab, overlayStack: [] }); }
+  jumpOverlay(name) { return () => this.setState({ phase: 'main', overlayStack: [name] }); }
+
+  setVariant1 = () => this.setState({ dashboardVariant: 1 });
+  setVariant2 = () => this.setState({ dashboardVariant: 2 });
+  setVariant3 = () => this.setState({ dashboardVariant: 3 });
+
+  openPeriodDetail = () => this.push('periodDetail');
+  openAddTransaction = () => this.push('addTransaction');
+  openProfile = () => this.push('profile');
+  openTaxRegime = () => this.push('taxRegime');
+  openTaxRegimeSelect = () => this.push('taxRegimeSelect');
+  openTaxRegimeDetails = () => this.push('taxRegimeDetails');
+  openConnectedBanks = () => this.push('connectedBanks');
+  openBankSelect = () => this.push('bankSelect');
+
+  setFilter(f) { return () => this.setState({ filterChip: f }); }
+
+  setAddTypeIncome = () => this.setState({ addType: 'income' });
+  setAddTypeExpense = () => this.setState({ addType: 'expense' });
+  setAddAmount = (e) => this.setState({ addAmount: e.target.value });
+  setAddCategory(name) { return () => this.setState({ addCategory: name }); }
+  saveTransaction = () => {
+    this.setState({ txSaved: true });
+    setTimeout(() => { this.setState({ txSaved: false }); this.pop(); }, 900);
+  };
+
+  saveProfile = () => {
+    this.setState({ profileSaved: true });
+    setTimeout(() => this.setState({ profileSaved: false }), 1500);
+  };
+
+  decEmployees = () => this.setState(s => ({ employeesCount: Math.max(0, s.employeesCount - 1) }));
+  incEmployees = () => this.setState(s => ({ employeesCount: s.employeesCount + 1 }));
+  setVat(v) { return () => this.setState({ vatRate: v }); }
+  toggleVatExempt = () => this.setState(s => ({ vatExempt: !s.vatExempt }));
+  saveRegimeDetails = () => {
+    this.setState({ regimeSaved: true });
+    setTimeout(() => { this.setState({ regimeSaved: false }); this.pop(); }, 900);
+  };
+
+  selectBank(name, color, initial) {
+    return () => {
+      this.setState({ bankConsentTarget: { name, color, initial } });
+      this.push('bankConsent');
+    };
+  }
+
+  startBankLoading = () => {
+    this.push('bankLoading');
+    this.setState({ bankLoadingStep: 0 });
+    if (this._bankInterval) clearInterval(this._bankInterval);
+    this._bankInterval = setInterval(() => {
+      this.setState(s => {
+        const next = s.bankLoadingStep + 1;
+        if (next >= 3) {
+          clearInterval(this._bankInterval);
+          setTimeout(() => this.popAll(), 1200);
+        }
+        return { bankLoadingStep: Math.min(next, 3) };
+      });
+    }, 900);
+  };
+
+  renderVals() {
+    const s = this.state;
+    const top = s.overlayStack[s.overlayStack.length - 1] || null;
+
+    const onbData = [
+      { title: 'Считайте налоги без ошибок', subtitle: 'Автоматический расчёт по вашим доходам и расходам — точно в срок.' },
+      { title: 'Все операции — под контролем', subtitle: 'Подключите банк или загрузите выписку, а сумму к уплате мы посчитаем сами.' },
+      { title: 'Оптимизируйте налоговую нагрузку', subtitle: 'Понятные подсказки помогут выбрать выгодный режим и не переплатить.' },
+    ];
+
+    const regimeDefs = s.taxStatus === 'selfEmployed'
+      ? [{ label: 'НПД', options: [
+          { id: 'npd', name: 'Налог на профессиональный доход', desc: 'Для тех, кто работает без сотрудников', rate: '4% / 6%' },
+        ] }]
+      : [
+          { label: 'УСН', options: [
+            { id: 'usn6', name: 'Доходы', desc: 'Налог с общей суммы поступлений', rate: '6%' },
+            { id: 'usn15', name: 'Доходы минус расходы', desc: 'Налог с разницы доходов и расходов', rate: '15%' },
+          ] },
+          { label: 'Патент', options: [
+            { id: 'patent', name: 'Патентная система', desc: 'Фиксированная стоимость патента', rate: 'фикс.' },
+          ] },
+          { label: 'ОСНО', options: [
+            { id: 'osno', name: 'Общая система', desc: 'НДФЛ 13–15% + НДС, полный бухучёт', rate: '13–15%' },
+          ] },
+        ];
+
+    const regimeChoices = regimeDefs.map(fam => ({
+      label: fam.label,
+      options: fam.options.map(opt => {
+        const active = s.selectedRegime === opt.id;
+        return {
+          ...opt,
+          border: active ? '#1F7A4F' : '#E7DFCE',
+          bg: active ? '#E3F1E7' : '#fff',
+          dotBorder: active ? '#1F7A4F' : '#C9C0AC',
+          dotBg: active ? '#1F7A4F' : '#fff',
+          select: () => this.selectRegime(opt.id),
+          selectAndBack: () => { this.selectRegime(opt.id); this.pop(); },
+        };
+      }),
+    }));
+
+    const recentTxSrc = [
+      { name: 'Оплата от ООО «Вектор»', date: '8 июля', amount: '+ 184 000 ₽', type: 'income' },
+      { name: 'Аренда офиса', date: '5 июля', amount: '− 65 000 ₽', type: 'expense' },
+      { name: 'Перевод от физ. лица', date: '3 июля', amount: '+ 42 500 ₽', type: 'unknown' },
+      { name: 'Канцелярия и расходники', date: '1 июля', amount: '− 8 300 ₽', type: 'expense' },
+    ];
+    const iconBgFor = (t) => t === 'income' ? '#E3F1E7' : t === 'unknown' ? '#FBEADB' : '#F1E9DA';
+    const colorFor = (t) => t === 'income' ? '#1F7A4F' : t === 'unknown' ? '#C1591F' : '#23261E';
+    const recentTx = recentTxSrc.map(t => ({ ...t, iconBg: iconBgFor(t.type), amountColor: colorFor(t.type), isIncome: t.type === 'income', isExpense: t.type === 'expense', isUnknown: t.type === 'unknown' }));
+
+    const periodTx = recentTxSrc.concat([
+      { name: 'Поставка материалов', date: '28 июня', amount: '− 121 400 ₽', type: 'expense' },
+      { name: 'Оплата от ИП Смирнова', date: '24 июня', amount: '+ 96 000 ₽', type: 'income' },
+    ]).map(t => ({ ...t, iconBg: iconBgFor(t.type), amountColor: colorFor(t.type), isIncome: t.type === 'income', isExpense: t.type === 'expense', isUnknown: t.type === 'unknown', reviewBorder: t.type === 'unknown' ? '3px solid #C1591F' : '3px solid transparent' }));
+
+    const filterDefs = [ { id: 'all', label: 'Все' }, { id: 'income', label: 'Доход' }, { id: 'review', label: 'Требует внимания' } ];
+    const filterChips = filterDefs.map(f => {
+      const active = s.filterChip === f.id;
+      return { label: f.label, border: active ? '#1F7A4F' : '#E7DFCE', bg: active ? '#E3F1E7' : '#fff', color: active ? '#1F7A4F' : '#78715F', select: this.setFilter(f.id) };
+    });
+
+    const periods = [
+      { month: 'Июнь 2026', income: '1 240 000 ₽', tax: '148 320 ₽', contributions: '0 ₽', count: 24, ratio: 12, open: this.openPeriodDetail },
+      { month: 'Май 2026', income: '980 000 ₽', tax: '112 400 ₽', contributions: '11 500 ₽', count: 19, ratio: 11, open: this.openPeriodDetail },
+      { month: 'Апрель 2026', income: '1 105 000 ₽', tax: '126 900 ₽', contributions: '0 ₽', count: 21, ratio: 11, open: this.openPeriodDetail },
+      { month: 'Март 2026', income: '860 000 ₽', tax: '98 300 ₽', contributions: '11 500 ₽', count: 17, ratio: 11, open: this.openPeriodDetail },
+    ];
+
+    const statements = [
+      { type: 'csv', name: 'Тинькофф_выписка_июнь.csv', date: '01.07.2026', count: 24, income: '1 240 000 ₽', expense: '812 500 ₽' },
+      { type: 'pdf', name: 'Сбербанк_выписка_май.pdf', date: '02.06.2026', count: 19, income: '980 000 ₽', expense: '690 200 ₽' },
+    ];
+
+    const chartMonths = ['Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл'];
+    const incomeVals = [40, 52, 58, 46, 64, 30];
+    const expenseVals = [26, 30, 34, 28, 38, 18];
+    const chartBars = chartMonths.map((m, i) => ({ label: m, incomeH: incomeVals[i], expenseH: expenseVals[i] }));
+
+    const catDefs = ['Услуги', 'Товары', 'Аренда', 'Прочее'];
+    const addCategories = catDefs.map(name => {
+      const active = s.addCategory === name;
+      return { name, border: active ? '#1F7A4F' : '#E7DFCE', bg: active ? '#E3F1E7' : '#fff', color: active ? '#1F7A4F' : '#23261E', select: this.setAddCategory(name) };
+    });
+
+    const connectedBanks = [
+      { name: 'Тинькофф Бизнес', status: 'Подключено 12.05.2026', color: '#FFD500', initial: 'Т' },
+      { name: 'Сбербанк', status: 'Подключено 03.02.2026', color: '#21A038', initial: 'С' },
+    ];
+    const bankDefsAll = [ { name: 'Альфа-Банк', color: '#EF3124', initial: 'А' }, { name: 'ВТБ', color: '#0A2896', initial: 'В' }, { name: 'Точка', color: '#FFDD2D', initial: 'Т' }, { name: 'Модульбанк', color: '#6C63FF', initial: 'М' } ];
+    const bankOptions = bankDefsAll.map(b => ({ ...b, select: this.selectBank(b.name, b.color, b.initial) }));
+
+    const vatDefsAll = ['20', '10', '0'];
+    const vatOptions = vatDefsAll.map(v => {
+      const active = s.vatRate === v;
+      return { label: v + '%', border: active ? '#1F7A4F' : '#E7DFCE', bg: active ? '#E3F1E7' : '#fff', color: active ? '#1F7A4F' : '#23261E', select: this.setVat(v) };
+    });
+
+    const navBg = (key) => {
+      const active = (s.phase === 'onboarding' && key === 'onboarding')
+        || (s.phase === 'taxMode' && key === 'taxMode')
+        || (s.phase === 'main' && !top && s.mainTab === key)
+        || (top === key);
+      return active ? '#E3F1E7' : 'transparent';
+    };
+
+    const tabColor = (key) => (s.mainTab === key && !top) ? '#1F7A4F' : '#9C9484';
+
+    const dots = [0, 1, 2].map(i => ({ w: s.onbIndex === i ? 24 : 8, c: s.onbIndex === i ? '#1F7A4F' : '#E7DFCE' }));
+
+    let bankLoadingLabel = 'Устанавливаем соединение…';
+    if (s.bankLoadingStep === 1) bankLoadingLabel = 'Загружаем операции…';
+    if (s.bankLoadingStep === 2) bankLoadingLabel = 'Проверяем данные…';
+    if (s.bankLoadingStep >= 3) bankLoadingLabel = 'Готово! Банк подключён.';
+
+    return {
+      deviceWidth: 402,
+      deviceHeight: 874,
+      onbIsSlide0: s.onbIndex === 0,
+      onbIsSlide1: s.onbIndex === 1,
+      onbIsSlide2: s.onbIndex === 2,
+      showOnboarding: s.phase === 'onboarding',
+      showTaxMode: s.phase === 'taxMode',
+      showMain: s.phase === 'main',
+      onbIndex: s.onbIndex,
+      onbTitle: onbData[s.onbIndex].title,
+      onbSubtitle: onbData[s.onbIndex].subtitle,
+      onbCta: s.onbIndex < 2 ? 'Далее' : 'Начать',
+      onbSkip: this.onbSkip,
+      onbNext: this.onbNext,
+      onbDotW0: dots[0].w, onbDotC0: dots[0].c,
+      onbDotW1: dots[1].w, onbDotC1: dots[1].c,
+      onbDotW2: dots[2].w, onbDotC2: dots[2].c,
+
+      chooseSelfEmployed: this.chooseSelfEmployed,
+      chooseIp: this.chooseIp,
+      regimeChoices,
+      continueToMain: this.continueToMain,
+
+      tabDashboard: s.mainTab === 'dashboard' && !top,
+      tabHistory: s.mainTab === 'history' && !top,
+      tabStatements: s.mainTab === 'statements' && !top,
+      tabSettings: s.mainTab === 'settings' && !top,
+      tabColor,
+      jumpTabB: (t) => this.jumpTabB(t),
+
+      variant1: s.dashboardVariant === 1,
+      variant2: s.dashboardVariant === 2,
+      variant3: s.dashboardVariant === 3,
+
+      openPeriodDetail: this.openPeriodDetail,
+      openAddTransaction: this.openAddTransaction,
+      openConnectedBanks: this.openConnectedBanks,
+      openProfile: this.openProfile,
+      openTaxRegime: this.openTaxRegime,
+      openTaxRegimeSelect: this.openTaxRegimeSelect,
+      openTaxRegimeDetails: this.openTaxRegimeDetails,
+      openBankSelect: this.openBankSelect,
+
+      chartBars,
+      recentTx,
+      periods,
+      statements,
+
+      pop: this.pop,
+      overlayPeriodDetail: top === 'periodDetail',
+      overlayAddTransaction: top === 'addTransaction',
+      overlayProfile: top === 'profile',
+      overlayTaxRegime: top === 'taxRegime',
+      overlayTaxRegimeSelect: top === 'taxRegimeSelect',
+      overlayTaxRegimeDetails: top === 'taxRegimeDetails',
+      overlayConnectedBanks: top === 'connectedBanks',
+      overlayBankSelect: top === 'bankSelect',
+      overlayBankConsent: top === 'bankConsent',
+      overlayBankLoading: top === 'bankLoading',
+
+      filterChips,
+      periodTx,
+
+      addType: s.addType,
+      addAmount: s.addAmount,
+      setAddAmount: this.setAddAmount,
+      setAddTypeIncome: this.setAddTypeIncome,
+      setAddTypeExpense: this.setAddTypeExpense,
+      addCategories,
+      saveTransaction: this.saveTransaction,
+      saveTxLabel: s.txSaved ? 'Сохранено ✓' : 'Сохранить операцию',
+
+      saveProfile: this.saveProfile,
+      saveProfileLabel: s.profileSaved ? 'Сохранено ✓' : 'Сохранить',
+
+      employeesCount: s.employeesCount,
+      decEmployees: this.decEmployees,
+      incEmployees: this.incEmployees,
+      vatOptions,
+      vatExempt: s.vatExempt,
+      vatExemptBorder: s.vatExempt ? '#1F7A4F' : '#C9C0AC',
+      vatExemptBg: s.vatExempt ? '#1F7A4F' : '#fff',
+      toggleVatExempt: this.toggleVatExempt,
+      saveRegimeDetails: this.saveRegimeDetails,
+      saveRegimeLabel: s.regimeSaved ? 'Сохранено ✓' : 'Сохранить',
+
+      connectedBanks,
+      bankOptions,
+      consentBankName: s.bankConsentTarget ? s.bankConsentTarget.name : '',
+      consentBankColor: s.bankConsentTarget ? s.bankConsentTarget.color : '#1F7A4F',
+      consentBankInitial: s.bankConsentTarget ? s.bankConsentTarget.initial : '',
+      startBankLoading: this.startBankLoading,
+      bankDone: s.bankLoadingStep >= 3,
+      bankNotDone: s.bankLoadingStep < 3,
+      bankLoadingLabel,
+
+      navBgOnboarding: navBg('onboarding'),
+      navBgTaxMode: navBg('taxMode'),
+      navBgDashboard: navBg('dashboard'),
+      navBgHistory: navBg('history'),
+      navBgStatements: navBg('statements'),
+      navBgSettings: navBg('settings'),
+      navBgProfile: navBg('profile'),
+      navBgTaxRegime: navBg('taxRegime'),
+      navBgConnectedBanks: navBg('connectedBanks'),
+      navBgAddTransaction: navBg('addTransaction'),
+      goOnboarding: this.goOnboarding,
+      goTaxMode: this.goTaxMode,
+      jumpTabDashboard: this.jumpTab('dashboard'),
+      jumpTabHistory: this.jumpTab('history'),
+      jumpTabStatements: this.jumpTab('statements'),
+      jumpTabSettings: this.jumpTab('settings'),
+      jumpTabBDashboard: this.jumpTabB('dashboard'),
+      jumpTabBHistory: this.jumpTabB('history'),
+      jumpTabBStatements: this.jumpTabB('statements'),
+      jumpTabBSettings: this.jumpTabB('settings'),
+      jumpOverlayProfile: this.jumpOverlay('profile'),
+      jumpOverlayTaxRegime: this.jumpOverlay('taxRegime'),
+      jumpOverlayConnectedBanks: this.jumpOverlay('connectedBanks'),
+      jumpOverlayAddTransaction: this.jumpOverlay('addTransaction'),
+      setVariant1: this.setVariant1,
+      setVariant2: this.setVariant2,
+      setVariant3: this.setVariant3,
+      v1Border: s.dashboardVariant === 1 ? '#1F7A4F' : '#E7DFCE',
+      v1Bg: s.dashboardVariant === 1 ? '#E3F1E7' : '#fff',
+      v1Color: s.dashboardVariant === 1 ? '#1F7A4F' : '#78715F',
+      v2Border: s.dashboardVariant === 2 ? '#1F7A4F' : '#E7DFCE',
+      v2Bg: s.dashboardVariant === 2 ? '#E3F1E7' : '#fff',
+      v2Color: s.dashboardVariant === 2 ? '#1F7A4F' : '#78715F',
+      v3Border: s.dashboardVariant === 3 ? '#1F7A4F' : '#E7DFCE',
+      v3Bg: s.dashboardVariant === 3 ? '#E3F1E7' : '#fff',
+      v3Color: s.dashboardVariant === 3 ? '#1F7A4F' : '#78715F',
+      segSelfEmployedBg: s.taxStatus === 'selfEmployed' ? '#fff' : 'transparent',
+      segSelfEmployedColor: s.taxStatus === 'selfEmployed' ? '#1F7A4F' : '#78715F',
+      segIpBg: s.taxStatus === 'ip' ? '#fff' : 'transparent',
+      segIpColor: s.taxStatus === 'ip' ? '#1F7A4F' : '#78715F',
+      tabColorDashboard: tabColor('dashboard'),
+      tabColorHistory: tabColor('history'),
+      tabColorStatements: tabColor('statements'),
+      tabColorSettings: tabColor('settings'),
+      addIncomeBorder: s.addType === 'income' ? '#1F7A4F' : '#E7DFCE',
+      addIncomeBg: s.addType === 'income' ? '#E3F1E7' : '#fff',
+      addIncomeColor: s.addType === 'income' ? '#1F7A4F' : '#23261E',
+      addExpenseBorder: s.addType === 'expense' ? '#1F7A4F' : '#E7DFCE',
+      addExpenseBg: s.addType === 'expense' ? '#E3F1E7' : '#fff',
+      addExpenseColor: s.addType === 'expense' ? '#1F7A4F' : '#23261E',
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -58,7 +58,11 @@ class _PeriodDetailScreenState extends State<PeriodDetailScreen> {
     final expenses = all
         .where((t) => t.type == TransactionType.expense)
         .fold(0.0, (s, t) => s + t.amount);
-    final tax = TaxCalculator.calculateTax(all, state.taxMode);
+    final tax = TaxCalculator.calculateTax(
+      all,
+      state.taxMode,
+      settings: state.taxSettings,
+    );
 
     return Scaffold(
       appBar: AppBar(title: Text(_title, style: AppTextStyles.headlineMedium)),

@@ -1,6 +1,6 @@
 {
-    "name": "ai_finansist",
-    "short_name": "ai_finansist",
+    "name": "AI Financial agent",
+    "short_name": "AI Fin. agent",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

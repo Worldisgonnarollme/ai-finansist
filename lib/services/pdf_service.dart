@@ -12,8 +12,10 @@ class PdfService {
 
     lastExtractedText = text;
     // ignore: avoid_print
-    print('=== PDF TEXT (first 3000) ===\n'
-        '${text.substring(0, text.length.clamp(0, 3000))}\n=== END ===');
+    print(
+      '=== PDF TEXT (first 3000) ===\n'
+      '${text.substring(0, text.length.clamp(0, 3000))}\n=== END ===',
+    );
 
     return _parseText(text);
   }
@@ -63,8 +65,9 @@ class PdfService {
 
     final dateSoloRe = RegExp(r'^\d{2}\.\d{2}\.\d{4}$');
     // Amount alone on a line, with mandatory +/- sign
-    final signedAmtSoloRe =
-        RegExp(r'^([+-])\s*([\d]+(?:[\s ][\d]{3})*[,.][\d]{2})$');
+    final signedAmtSoloRe = RegExp(
+      r'^([+-])\s*([\d]+(?:[\s ][\d]{3})*[,.][\d]{2})$',
+    );
 
     int i = 0;
     while (i < lines.length) {
@@ -80,7 +83,7 @@ class PdfService {
       }
 
       final descLine = lines[i + 1]; // description
-      final amtLine = lines[i + 2];  // signed amount
+      final amtLine = lines[i + 2]; // signed amount
 
       // Description must not be a header keyword or another date
       if (_isHeaderText(descLine) || dateSoloRe.hasMatch(descLine)) {
@@ -101,12 +104,14 @@ class PdfService {
         continue;
       }
 
-      txs.add(_tx(
-        date,
-        amount,
-        descLine.isNotEmpty ? descLine : 'Операция',
-        sign == '+' ? TransactionType.income : TransactionType.expense,
-      ));
+      txs.add(
+        _tx(
+          date,
+          amount,
+          descLine.isNotEmpty ? descLine : 'Операция',
+          sign == '+' ? TransactionType.income : TransactionType.expense,
+        ),
+      );
 
       i += 4; // consume: date + description + amount + balance
     }
@@ -129,8 +134,7 @@ class PdfService {
     final dateSoloRe = RegExp(r'^\d{2}\.\d{2}\.\d{4}$');
     final timeSoloRe = RegExp(r'^\d{2}:\d{2}$');
     // Unsigned or signed amount alone
-    final amtSoloRe =
-        RegExp(r'^([+-]?)([\d]+(?:[\s ][\d]{3})*[,.][\d]{2})$');
+    final amtSoloRe = RegExp(r'^([+-]?)([\d]+(?:[\s ][\d]{3})*[,.][\d]{2})$');
     final authCodeRe = RegExp(r'^\d{4,6}$');
 
     int i = 0;
@@ -187,13 +191,17 @@ class PdfService {
       final isIncome = sign == '+';
 
       // Clean description
-      desc = desc
-          .replaceAll(RegExp(r'Операция по счету[\s\*\d]+'), '')
-          .trim();
+      desc = desc.replaceAll(RegExp(r'Операция по счету[\s\*\d]+'), '').trim();
       if (desc.isEmpty) desc = 'Операция';
 
-      txs.add(_tx(date, amount, desc,
-          isIncome ? TransactionType.income : TransactionType.expense));
+      txs.add(
+        _tx(
+          date,
+          amount,
+          desc,
+          isIncome ? TransactionType.income : TransactionType.expense,
+        ),
+      );
 
       i = amtIdx + 2; // skip amount + balance
     }
@@ -240,8 +248,14 @@ class PdfService {
       }
       if (desc.isEmpty) desc = 'Операция';
 
-      txs.add(_tx(date, amount, desc,
-          sign == '+' ? TransactionType.income : TransactionType.expense));
+      txs.add(
+        _tx(
+          date,
+          amount,
+          desc,
+          sign == '+' ? TransactionType.income : TransactionType.expense,
+        ),
+      );
     }
 
     return txs;
@@ -255,8 +269,7 @@ class PdfService {
     final lines = _lines(text);
 
     final dateSoloRe = RegExp(r'^\d{2}\.\d{2}\.\d{4}$');
-    final amtSoloRe =
-        RegExp(r'^([+-]?)([\d]+(?:[\s ][\d]{3})*[,.][\d]{2})$');
+    final amtSoloRe = RegExp(r'^([+-]?)([\d]+(?:[\s ][\d]{3})*[,.][\d]{2})$');
 
     double? prevBalance;
     int i = 0;
@@ -330,29 +343,35 @@ class PdfService {
     final txs = <Transaction>[];
     final lines = _lines(text);
     final txRe = RegExp(
-        r'^(\d{2}\.\d{2}\.\d{4})\s+(.{2,80}?)\s+([+-]\s*[\d]+(?:[\s ][\d]{3})*[,.][\d]{2})');
+      r'^(\d{2}\.\d{2}\.\d{4})\s+(.{2,80}?)\s+([+-]\s*[\d]+(?:[\s ][\d]{3})*[,.][\d]{2})',
+    );
     for (final line in lines) {
       final m = txRe.firstMatch(line);
       if (m == null) continue;
       final date = _parseDate(m.group(1)!);
       final desc = m.group(2)!.trim();
-      final rawAmt =
-          m.group(3)!.replaceAll(RegExp(r'[\s ]'), '').replaceAll(',', '.');
+      final rawAmt = m
+          .group(3)!
+          .replaceAll(RegExp(r'[\s ]'), '')
+          .replaceAll(',', '.');
       final amount = double.tryParse(rawAmt);
       if (date == null || amount == null) continue;
-      txs.add(_tx(date, amount.abs(), desc.isNotEmpty ? desc : 'Операция',
-          amount >= 0 ? TransactionType.income : TransactionType.expense));
+      txs.add(
+        _tx(
+          date,
+          amount.abs(),
+          desc.isNotEmpty ? desc : 'Операция',
+          amount >= 0 ? TransactionType.income : TransactionType.expense,
+        ),
+      );
     }
     return txs;
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
-  static List<String> _lines(String text) => text
-      .split('\n')
-      .map((l) => l.trim())
-      .where((l) => l.isNotEmpty)
-      .toList();
+  static List<String> _lines(String text) =>
+      text.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
 
   static bool _isHeaderText(String s) =>
       s.startsWith('Дата') ||
@@ -379,23 +398,30 @@ class PdfService {
   }
 
   static double? _parseAmount(String raw) => double.tryParse(
-      raw.replaceAll(RegExp(r'[\s ]'), '').replaceAll(',', '.'));
+    raw.replaceAll(RegExp(r'[\s ]'), '').replaceAll(',', '.'),
+  );
 
   static Transaction _tx(
-          DateTime date, double amount, String desc, TransactionType type) =>
-      Transaction(
-        date: date,
-        amount: amount,
-        description: desc,
-        type: type,
-        source: TransactionSource.csv,
-      );
+    DateTime date,
+    double amount,
+    String desc,
+    TransactionType type,
+  ) => Transaction(
+    date: date,
+    amount: amount,
+    description: desc,
+    type: type,
+    source: TransactionSource.csv,
+  );
 
   static DateTime? _parseDate(String s) {
     final m = RegExp(r'^(\d{2})\.(\d{2})\.(\d{4})').firstMatch(s);
     if (m != null) {
-      return DateTime(int.parse(m.group(3)!), int.parse(m.group(2)!),
-          int.parse(m.group(1)!));
+      return DateTime(
+        int.parse(m.group(3)!),
+        int.parse(m.group(2)!),
+        int.parse(m.group(1)!),
+      );
     }
     return DateTime.tryParse(s);
   }

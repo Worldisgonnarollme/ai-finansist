@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://your-app.dev/schemas/tax_policy_output.schema.json",
+  "title": "Tax Policy Output",
+  "description": "Результат юридической классификации транзакции OPA",
+  "type": "object",
+  "required": ["category", "taxable", "needs_review"],
+  "properties": {
+    "category": {
+      "type": "string",
+      "enum": [
+        "business_income",
+        "business_expense",
+        "personal_transfer",
+        "tax_free_income",
+        "unknown"
+      ]
+    },
+    "taxable": {
+      "type": "boolean",
+      "description": "Облагается ли налогом"
+    },
+    "tax_rate": {
+      "type": "number",
+      "description": "Ставка налога, если применима",
+      "nullable": true
+    },
+    "deductible": {
+      "type": "boolean",
+      "description": "Можно ли учитывать как расход",
+      "default": false
+    },
+    "needs_review": {
+      "type": "boolean",
+      "description": "Требуется ли ручная проверка"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Юридическое основание решения"
+    }
+  },
+  "additionalProperties": false
+}

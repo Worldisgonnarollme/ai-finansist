@@ -39,4 +39,30 @@ class AppGradients {
     end: Alignment.bottomRight,
     colors: [Color(0xFFF0975F), Color(0xFFE0713A)],
   );
+
+  // Онбординг (flutter-onboarding-green-orange skill) — орб, прогресс-бар
+  // налога и линии степпера/индикатора, фон сцены.
+  static const onbOrb = RadialGradient(
+    center: Alignment(-0.36, -0.40),
+    colors: [Color(0xFF7FB894), Color(0xFF3E7A5B), Color(0xFFE58B4E)],
+    stops: [0.0, 0.42, 1.0],
+  );
+
+  static const onbProgress = LinearGradient(
+    colors: [AppColors.onbGreen, AppColors.onbOrange],
+  );
+
+  static const onbSceneBg = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFEDF3EC), Color(0xFFF3EEE2)],
+  );
+
+  /// Callout-карта настроек «Подключите банк» (120°).
+  static const onbCallout = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment(1.2, 0.4),
+    colors: [Color(0xFF2F6B4F), Color(0xFF1E4A36), Color(0xFF8A4A26)],
+    stops: [0.0, 0.62, 1.0],
+  );
 }

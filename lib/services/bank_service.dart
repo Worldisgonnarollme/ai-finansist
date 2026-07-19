@@ -1,6 +1,7 @@
 import 'dart:math';
 import '../models/transaction.dart';
 import '../models/bank.dart';
+import '../models/bank_account.dart';
 
 class BankService {
   static final _rng = Random();
@@ -8,6 +9,20 @@ class BankService {
   static Future<List<Transaction>> connectAndFetch(Bank bank) async {
     await Future.delayed(const Duration(seconds: 3));
     return _generateMock(bank);
+  }
+
+  // Мок-счёт банка — только расчётный счёт (единственный тип, который
+  // ведёт ИП/ООО для бизнес-операций; никаких карт и вкладов). Генерируется
+  // один раз при подключении банка и дальше хранится как есть (см.
+  // AppState.connectBank) — реального банковского API нет.
+  static List<BankAccount> generateAccounts(Bank bank) {
+    return [
+      BankAccount(
+        bankId: bank.id,
+        name: 'Расчётный счёт',
+        maskedNumber: '•• ${1000 + _rng.nextInt(9000)}',
+      ),
+    ];
   }
 
   static List<Transaction> _generateMock(Bank bank) {
@@ -48,14 +63,16 @@ class BankService {
         if (date.isAfter(now)) continue;
         final pick = incomeData[_rng.nextInt(incomeData.length)];
         final amount = 15000 + _rng.nextInt(85000).toDouble();
-        txs.add(Transaction(
-          date: date,
-          amount: amount,
-          description: pick.$1,
-          type: pick.$2,
-          source: TransactionSource.bank,
-          bankName: bank.name,
-        ));
+        txs.add(
+          Transaction(
+            date: date,
+            amount: amount,
+            description: pick.$1,
+            type: pick.$2,
+            source: TransactionSource.bank,
+            bankName: bank.name,
+          ),
+        );
       }
 
       final expCount = _rng.nextInt(3);
@@ -65,14 +82,16 @@ class BankService {
         if (date.isAfter(now)) continue;
         final pick = expenseData[_rng.nextInt(expenseData.length)];
         final amount = 500 + _rng.nextInt(9500).toDouble();
-        txs.add(Transaction(
-          date: date,
-          amount: amount,
-          description: pick.$1,
-          type: pick.$2,
-          source: TransactionSource.bank,
-          bankName: bank.name,
-        ));
+        txs.add(
+          Transaction(
+            date: date,
+            amount: amount,
+            description: pick.$1,
+            type: pick.$2,
+            source: TransactionSource.bank,
+            bankName: bank.name,
+          ),
+        );
       }
     }
 

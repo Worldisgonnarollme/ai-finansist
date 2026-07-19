@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-Финансист — Налоговый режим (desktop v3, аккордеон)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAF8F2; --ink:#1C2B23; --ink-soft:#5C6B61;
+    --green:#2F6B4F; --green-deep:#1E4A36; --green-soft:#E4EEE6;
+    --orange:#E07A3F; --orange-txt:#B85C24; --orange-soft:#F9E8DB;
+    --card:#FFFFFF; --line:#E6E2D6;
+    --shadow:0 18px 44px -20px rgba(30,74,54,.16);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Manrope',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+
+  .wrap{max-width:720px;margin:0 auto;padding:40px 24px 140px}
+  h1{font-size:32px;font-weight:800;letter-spacing:-.03em}
+  .sub{font-size:14px;color:var(--ink-soft);margin:4px 0 28px}
+
+  .gtitle{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--ink-soft);margin:0 6px 10px}
+  .section{margin-bottom:26px}
+  .list{display:flex;flex-direction:column;gap:12px}
+
+  /* ---------- аккордеон-карточка ---------- */
+  .rcard{
+    background:var(--card);border:1.5px solid var(--line);border-radius:18px;
+    cursor:pointer;transition:border-color .25s, background .25s;overflow:hidden;
+  }
+  .rcard:hover{border-color:#CBD8CD}
+  .rcard.sel{border-color:var(--green);background:#F4F9F4}
+
+  .rcard .head{display:flex;align-items:center;gap:12px;padding:18px 22px}
+  .rcard .name{font-size:17px;font-weight:800;letter-spacing:-.01em}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;
+    padding:5px 12px;border-radius:999px;white-space:nowrap}
+  .chip.green{background:var(--green-soft);color:var(--green)}
+  .chip.orange{background:var(--orange-soft);color:var(--orange-txt)}
+  .who{margin-left:auto;font-size:12px;font-weight:600;color:var(--ink-soft)}
+  .check{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line);flex:none;
+    display:grid;place-items:center;font-size:12px;color:#fff;transition:.25s}
+  .rcard.sel .check{background:var(--green);border-color:var(--green)}
+
+  /* раскрытие: grid-rows 0fr -> 1fr */
+  .body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s cubic-bezier(.2,.8,.2,1)}
+  .rcard.sel .body{grid-template-rows:1fr}
+  .body>div{overflow:hidden}
+  .inner{padding:0 22px 20px}
+  .desc{font-size:14px;color:var(--ink-soft);line-height:1.55;margin-bottom:12px}
+  .facts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+  .fact{font-size:12px;font-weight:600;color:var(--ink-soft);background:var(--bg);
+    border:1px solid var(--line);padding:5px 11px;border-radius:999px}
+
+  .obj{display:flex;gap:8px;margin-top:12px}
+  .obj button{font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;flex:1;
+    padding:12px;border-radius:12px;border:1.5px solid var(--line);
+    background:var(--card);color:var(--ink-soft);transition:.2s}
+  .obj button.on{border-color:var(--green);color:var(--green);background:var(--green-soft)}
+
+  .more{display:inline-flex;align-items:center;gap:6px;margin-top:14px;
+    font-size:13px;font-weight:700;color:var(--green);text-decoration:none}
+  .more:hover{color:var(--green-deep)}
+
+  /* ---------- нижняя панель ---------- */
+  .bottom{
+    position:fixed;left:0;right:0;bottom:0;
+    background:rgba(250,248,242,.85);backdrop-filter:blur(16px);
+    border-top:1px solid var(--line);
+  }
+  .bottom .row{max-width:720px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;gap:16px}
+  .picked{font-size:13.5px;color:var(--ink-soft)}
+  .picked b{color:var(--ink)}
+  .cta{
+    margin-left:auto;display:inline-flex;align-items:center;gap:12px;
+    background:var(--green);color:#fff;border:none;cursor:pointer;
+    font-family:inherit;font-size:15px;font-weight:700;
+    padding:15px 30px;border-radius:999px;transition:.25s;
+    box-shadow:0 14px 28px -12px rgba(30,74,54,.5);
+  }
+  .cta:hover:not(:disabled){background:var(--green-deep);transform:translateY(-2px)}
+  .cta:disabled{background:var(--line);color:var(--ink-soft);box-shadow:none;cursor:not-allowed}
+  .cta .arr{width:24px;height:24px;border-radius:50%;background:var(--orange);
+    display:grid;place-items:center;font-size:12px}
+  .cta:disabled .arr{background:#D8D4C8}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Налоговый режим</h1>
+  <div class="sub">Выберите свой — от него зависит формула расчёта налога</div>
+
+  <div id="sections"></div>
+</div>
+
+<div class="bottom">
+  <div class="row">
+    <span class="picked" id="picked">Режим не выбран</span>
+    <button class="cta" id="save" disabled>Сохранить <span class="arr">→</span></button>
+  </div>
+</div>
+
+<script>
+  // ставки и лимиты — вынести в конфиг и сверить с актуальным НК
+  const SECTIONS = [
+    {title:'Самозанятость', items:[
+      {id:'npd', name:'НПД', rate:'4–6%', rateCls:'green', who:'самозанятые и ИП',
+       desc:'Налог на профессиональный доход. 4% с доходов от физлиц, 6% — от юрлиц и ИП. Без деклараций и обязательных взносов.',
+       facts:['Доход до 2,4 млн ₽/год','Без сотрудников','Вычет 10 000 ₽ новичкам']},
+    ]},
+    {title:'Режимы для ИП', items:[
+      {id:'usn', name:'УСН', rate:'6% или 15%', rateCls:'green', who:'только ИП',
+       desc:'Упрощенная система. Выберите объект: платить с дохода или с разницы «доходы — расходы».',
+       facts:['Доход до 450 млн ₽/год','До 130 сотрудников','Декларация раз в год'],
+       objects:['Доходы · 6%','Доходы — расходы · 15%']},
+      {id:'ausn', name:'АУСН', rate:'8% или 20%', rateCls:'green', who:'только ИП',
+       desc:'Автоматизированная УСН — налог считает ФНС по данным банка, без деклараций и взносов. Действует не во всех регионах.',
+       facts:['Доход до 60 млн ₽/год','До 5 сотрудников'],
+       objects:['Доходы · 8%','Доходы — расходы · 20%']},
+      {id:'psn', name:'ПСН', rate:'патент', rateCls:'green', who:'только ИП',
+       desc:'Патент — фиксированная стоимость на срок от месяца до года. Зависит от региона и вида деятельности.',
+       facts:['Доход до 60 млн ₽/год','До 15 сотрудников','Не для всех видов деятельности']},
+      {id:'eshn', name:'ЕСХН', rate:'6% с прибыли', rateCls:'green', who:'только ИП',
+       desc:'Единый сельскохозяйственный налог — для производителей сельхозпродукции.',
+       facts:['Доля сельхоздохода ≥ 70%']},
+      {id:'osno', name:'ОСНО', rate:'НДФЛ 13–22% + НДС', rateCls:'orange', who:'только ИП',
+       desc:'Общая система — без ограничений по доходу и сотрудникам, но с самой сложной отчетностью и НДС.',
+       facts:['Без лимитов','НДС 22%','Больше всего отчетности']},
+    ]},
+  ];
+
+  let selId=null, objIdx=0;
+  const root=document.getElementById('sections');
+
+  function render(){
+    root.innerHTML='';
+    SECTIONS.forEach(sec=>{
+      const s=document.createElement('div');
+      s.className='section';
+      s.innerHTML=`<div class="gtitle">${sec.title}</div>`;
+      const list=document.createElement('div');
+      list.className='list';
+      sec.items.forEach(r=>{
+        const el=document.createElement('div');
+        el.className='rcard'+(r.id===selId?' sel':'');
+        el.innerHTML=`
+          <div class="head">
+            <span class="name">${r.name}</span>
+            <span class="chip ${r.rateCls}">${r.rate}</span>
+            <span class="who">${r.who}</span>
+            <span class="check">✓</span>
+          </div>
+          <div class="body"><div><div class="inner">
+            <div class="desc">${r.desc}</div>
+            <div class="facts">${r.facts.map(f=>`<span class="fact">${f}</span>`).join('')}</div>
+            ${r.objects?`<div class="obj">${r.objects.map((o,i)=>
+              `<button class="${r.id===selId&&i===objIdx?'on':''}" data-o="${i}">${o}</button>`).join('')}</div>`:''}
+            <a class="more" href="#" onclick="return false">Подробнее о режиме →</a>
+          </div></div></div>`;
+        el.addEventListener('click',()=>{
+          if(selId!==r.id){selId=r.id;objIdx=0;render();}
+        });
+        el.querySelectorAll('.obj button').forEach(b=>b.addEventListener('click',e=>{
+          e.stopPropagation(); objIdx=+b.dataset.o; render();
+        }));
+        list.appendChild(el);
+      });
+      s.appendChild(list);
+      root.appendChild(s);
+    });
+    updateBottom();
+  }
+
+  function updateBottom(){
+    const all=SECTIONS.flatMap(s=>s.items);
+    const r=all.find(x=>x.id===selId);
+    const picked=document.getElementById('picked');
+    const save=document.getElementById('save');
+    if(!r){
+      picked.textContent='Режим не выбран';
+      save.disabled=true;
+      save.innerHTML='Сохранить <span class="arr">→</span>';
+    }else{
+      picked.innerHTML='Выбрано: <b>'+r.name+(r.objects?' · '+r.objects[objIdx]:'')+'</b>';
+      save.disabled=false;
+      save.innerHTML='Сохранить '+r.name+' <span class="arr">→</span>';
+    }
+  }
+
+  render();
+</script>
+</body>
+</html>

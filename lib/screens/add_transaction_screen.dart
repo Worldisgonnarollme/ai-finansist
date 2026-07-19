@@ -60,7 +60,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     final d = await showDatePicker(
       context: context,
       initialDate: _date,
-      firstDate: DateTime(2020),
+      firstDate: DateTime(2000),
       lastDate: DateTime.now(),
       locale: const Locale('ru'),
     );

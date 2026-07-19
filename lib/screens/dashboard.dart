@@ -9,7 +9,7 @@ import '../core/theme/app_theme.dart';
 import '../main.dart';
 import '../services/tax_calculator.dart';
 import '../features/dashboard/widgets/tax_summary_card.dart';
-import '../features/dashboard/widgets/metric_chip.dart';
+import '../features/dashboard/widgets/bank_summary_card.dart';
 import '../features/dashboard/widgets/recent_transactions_list.dart';
 import '../widgets/advice_card.dart';
 import '../widgets/monthly_chart.dart';
@@ -64,6 +64,7 @@ class DashboardScreen extends StatelessWidget {
         : AppSpacing.sp32 + AppSpacing.sp24;
 
     return Scaffold(
+      backgroundColor: AppColors.onbBg,
       body: SafeArea(
         // bottom: false — нижний safe-area/отступ под пилюлю считает сама
         // _NarrowBody (narrowBottomPadding), через MediaQuery.paddingOf,
@@ -113,9 +114,11 @@ class _NarrowBody extends StatelessWidget {
               const SizedBox(height: AppSpacing.sp16),
               FadeSlideItem(index: 1, child: TaxSummaryCard(state: state)),
               FadeSlideItem(index: 2, child: _Warnings(state: state)),
+              if (state.hasBanks) ...[
+                const SizedBox(height: AppSpacing.sp20),
+                FadeSlideItem(index: 3, child: _BankCardsSection(state: state)),
+              ],
               const SizedBox(height: AppSpacing.sp16),
-              FadeSlideItem(index: 3, child: _IncomeExpenseRow(state: state)),
-              const SizedBox(height: AppSpacing.sp16 - 2),
               FadeSlideItem(index: 4, child: _ActionButtons(state: state)),
               const SizedBox(height: AppSpacing.sp20),
               FadeSlideItem(index: 5, child: _ChartCard(state: state)),
@@ -182,12 +185,14 @@ class _WideBody extends StatelessWidget {
                                 index: 2,
                                 child: _Warnings(state: state),
                               ),
+                              if (state.hasBanks) ...[
+                                const SizedBox(height: AppSpacing.sp20),
+                                FadeSlideItem(
+                                  index: 3,
+                                  child: _BankCardsSection(state: state),
+                                ),
+                              ],
                               const SizedBox(height: AppSpacing.sp16),
-                              FadeSlideItem(
-                                index: 3,
-                                child: _IncomeExpenseRow(state: state),
-                              ),
-                              const SizedBox(height: AppSpacing.sp16 - 2),
                               FadeSlideItem(
                                 index: 4,
                                 child: _ActionButtons(state: state),
@@ -256,6 +261,35 @@ class _ChartCard extends StatelessWidget {
   }
 }
 
+// Отдельная сводка по каждому подключённому банку — доход/расход только
+// по его операциям, налог/взносы/срок оплаты общие на весь бизнес (см.
+// BankSummaryCard). Показывается только если есть хотя бы один банк.
+class _BankCardsSection extends StatelessWidget {
+  final AppState state;
+  const _BankCardsSection({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    final banks = state.connectedBanks;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(
+            left: AppSpacing.sp4,
+            bottom: AppSpacing.sp8,
+          ),
+          child: Text('БАНКИ', style: AppTextStyles.labelSmall),
+        ),
+        for (var i = 0; i < banks.length; i++) ...[
+          if (i > 0) const SizedBox(height: AppSpacing.sp12),
+          BankSummaryCard(state: state, bank: banks[i]),
+        ],
+      ],
+    );
+  }
+}
+
 class _RecentList extends StatelessWidget {
   final AppState state;
   const _RecentList({required this.state});
@@ -293,7 +327,10 @@ class _Header extends StatelessWidget {
             children: [
               Text(
                 '${_greeting()}, $name',
-                style: AppTextStyles.bodySmall,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textPrimary,
+                  fontSize: AppTextStyles.bodySmall.fontSize! * 2,
+                ),
               ),
               const SizedBox(height: AppSpacing.sp8 - 2),
               Container(
@@ -490,36 +527,6 @@ class _NdflScaleNote extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _IncomeExpenseRow extends StatelessWidget {
-  final AppState state;
-  const _IncomeExpenseRow({required this.state});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: MetricChip(
-            label: 'Доходы',
-            value: state.currentIncome.rub,
-            icon: Icons.arrow_upward_rounded,
-            isPositive: true,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sp12 - 2),
-        Expanded(
-          child: MetricChip(
-            label: 'Расходы',
-            value: state.currentExpenses.rub,
-            icon: Icons.arrow_downward_rounded,
-            isPositive: false,
-          ),
-        ),
-      ],
     );
   }
 }

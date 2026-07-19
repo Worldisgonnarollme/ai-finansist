@@ -1,0 +1,40 @@
+redirectsOrigin = "config"
+plugins = []
+headers = []
+
+[functions]
+
+[functions."*"]
+
+[build]
+publish = "/Users/mariadmitrieva/VSCode_Projects/ai_financial_agent/build/web"
+publishOrigin = "config"
+commandOrigin = "config"
+command = "git clone https://github.com/flutter/flutter.git -b stable --depth 1 _flutter && export PATH=\"$PATH:$PWD/_flutter/bin\" && flutter pub get && flutter build web --release"
+
+[build.environment]
+FLUTTER_WEB = "true"
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]

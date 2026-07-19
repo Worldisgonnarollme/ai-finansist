@@ -11,6 +11,7 @@ import '../core/theme/app_colors.dart';
 import '../core/theme/app_gradients.dart';
 import '../core/theme/app_text_styles.dart';
 import '../core/theme/app_theme.dart';
+import '../core/widgets/region_picker.dart';
 import '../widgets/settings_section.dart';
 import '../widgets/responsive_page.dart';
 import '../widgets/ru_phone_formatter.dart';
@@ -29,7 +30,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _nameCtrl;
   late TextEditingController _phoneCtrl;
   late TextEditingController _emailCtrl;
-  late TextEditingController _regionCtrl;
   late TextEditingController _activityCtrl;
   late TextEditingController _innCtrl;
   late TextEditingController _ogrnipCtrl;
@@ -52,7 +52,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _emailCtrl = TextEditingController(
       text: state.email.isNotEmpty ? state.email : (fbUser?.email ?? ''),
     );
-    _regionCtrl = TextEditingController(text: state.region);
     _activityCtrl = TextEditingController(text: state.activityType);
     _innCtrl = TextEditingController(text: state.inn);
     _ogrnipCtrl = TextEditingController(text: state.ogrnip);
@@ -63,7 +62,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
     _emailCtrl.dispose();
-    _regionCtrl.dispose();
     _activityCtrl.dispose();
     _innCtrl.dispose();
     _ogrnipCtrl.dispose();
@@ -75,7 +73,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     state.setUserName(_nameCtrl.text.trim());
     state.setPhoneNumber(_phoneCtrl.text.trim());
     state.setEmail(_emailCtrl.text.trim());
-    state.setRegion(_regionCtrl.text.trim());
     state.setActivityType(_activityCtrl.text.trim());
     state.setInn(_innCtrl.text.trim());
     state.setOgrnip(_ogrnipCtrl.text.trim());
@@ -206,13 +203,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       SettingsSection(
                         title: 'Деятельность',
                         children: [
-                          SettingsRow(
-                            child: _Field(
-                              label: 'Регион ведения деятельности',
-                              controller: _regionCtrl,
-                              hint: 'Например: Москва',
-                            ),
-                          ),
+                          SettingsRow(child: _RegionField()),
                           SettingsRow(
                             child: _Field(
                               label: 'Вид деятельности',
@@ -413,6 +404,63 @@ class _Avatar extends StatelessWidget {
                         color: AppColors.onAccent,
                       ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Раньше было свободным текстом — из-за этого регион не совпадал по
+// написанию со справочником регионов (АУСН/лимиты патента завязаны на
+// точное совпадение названия), поэтому здесь тот же выбор из списка, что
+// и на экране "Налоговый режим" (см. core/widgets/region_picker.dart).
+class _RegionField extends StatelessWidget {
+  const _RegionField();
+
+  @override
+  Widget build(BuildContext context) {
+    final region = context.watch<AppState>().region;
+    return GestureDetector(
+      onTap: () async {
+        final picked = await showRegionPicker(context, current: region.isEmpty ? null : region);
+        if (picked != null && context.mounted) {
+          context.read<AppState>().setRegion(picked);
+        }
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Регион ведения деятельности', style: AppTextStyles.labelSmall),
+          const SizedBox(height: AppSpacing.sp8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sp12,
+              vertical: AppSpacing.sp12,
+            ),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.divider),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    region.isEmpty ? 'Не выбран' : region,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: region.isEmpty ? AppColors.textSecondary : AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: AppColors.textSecondary,
+                ),
+              ],
             ),
           ),
         ],

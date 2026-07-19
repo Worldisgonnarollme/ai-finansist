@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AI-Финансист — онбординг (mobile concept)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:        #FAF8F2;
+    --ink:       #1C2B23;
+    --ink-soft:  #5C6B61;
+    --green:     #2F6B4F;
+    --green-deep:#1E4A36;
+    --green-soft:#E4EEE6;
+    --orange:    #E07A3F;
+    --orange-txt:#B85C24;
+    --orange-soft:#F9E8DB;
+    --card:      #FFFFFF;
+    --line:      #E6E2D6;
+    --shadow: 0 18px 44px -18px rgba(30,74,54,.24);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:'Manrope',system-ui,sans-serif;
+    background:#E9E6DD; color:var(--ink);
+    display:grid; place-items:center; padding:24px;
+  }
+
+  /* phone frame — только для предпросмотра на десктопе */
+  .phone{
+    width:390px; height:844px; background:var(--bg);
+    border-radius:48px; overflow:hidden; position:relative;
+    box-shadow:0 40px 100px -30px rgba(0,0,0,.35), 0 0 0 10px #14140F;
+    display:flex; flex-direction:column;
+    user-select:none;
+  }
+  @media (max-width:440px){
+    body{padding:0}
+    .phone{width:100%;height:100dvh;border-radius:0;box-shadow:none}
+  }
+
+  /* ---------- scene (верх, ~54% высоты) ---------- */
+  .scene{
+    position:relative; height:54%;
+    background:linear-gradient(165deg,#EDF3EC,#F3EEE2);
+    border-radius:0 0 32px 32px; overflow:hidden;
+    touch-action:pan-y;
+  }
+  .statusbar{
+    position:relative; z-index:5;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:18px 26px 0; font-size:15px; font-weight:700;
+  }
+  .skip{
+    position:absolute; z-index:5; top:56px; right:22px;
+    font-size:14px; font-weight:600; color:var(--ink-soft);
+    text-decoration:none; padding:7px 14px; border-radius:999px;
+    background:rgba(255,255,255,.55); backdrop-filter:blur(8px);
+  }
+  .orb{
+    position:absolute; width:400px; height:400px; border-radius:50%;
+    left:50%; top:52%; transform:translate(-50%,-50%);
+    background:radial-gradient(circle at 32% 30%, #7FB894 0%, #3E7A5B 42%, #E58B4E 100%);
+    filter:blur(2px); opacity:.85;
+    transition:transform 1s cubic-bezier(.2,.8,.2,1);
+  }
+  .grain{position:absolute;inset:0;opacity:.35;mix-blend-mode:soft-light;pointer-events:none}
+  .rings{position:absolute;inset:0;pointer-events:none}
+  .rings circle{fill:none;stroke:rgba(47,107,79,.12);stroke-width:1}
+
+  .cards{position:absolute;inset:0;pointer-events:none}
+  .fcard{
+    position:absolute; background:var(--card); border-radius:16px;
+    box-shadow:var(--shadow); padding:14px 16px;
+    opacity:0; transform:translateY(20px) scale(.96);
+    transition:opacity .45s ease, transform .55s cubic-bezier(.2,.8,.2,1);
+    transition-delay:var(--d,0s);
+  }
+  .fcard.show{opacity:1;transform:translateY(0) scale(1)}
+  .fcard .label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  .fcard .big{font-size:24px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:4px}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:6px 11px;border-radius:999px}
+  .chip.green{background:var(--green-soft);color:var(--green)}
+  .chip.orange{background:var(--orange-soft);color:var(--orange-txt)}
+  .chip.glass{background:rgba(255,255,255,.65);backdrop-filter:blur(8px);color:var(--green-deep)}
+  .dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+  .progress{height:7px;border-radius:999px;background:var(--green-soft);margin-top:12px;overflow:hidden}
+  .progress i{display:block;height:100%;width:0;border-radius:999px;
+    background:linear-gradient(90deg,var(--green),var(--orange));
+    transition:width 1s cubic-bezier(.2,.8,.2,1) .35s}
+  .fcard.show .progress i{width:64%}
+
+  .ai-row{display:flex;gap:10px;align-items:flex-start}
+  .ai-ic{flex:none;width:32px;height:32px;border-radius:10px;color:#fff;display:grid;place-items:center;font-size:14px;
+    background:linear-gradient(135deg,var(--orange),#C9622A)}
+  .ai-txt{font-size:13px;line-height:1.45}
+  .ai-txt b{color:var(--green-deep)}
+
+  .bank-row{display:flex;align-items:center;gap:10px;padding:8px 0}
+  .bank-row + .bank-row{border-top:1px solid var(--line)}
+  .bank-ic{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:12px;color:#fff}
+  .bank-name{font-size:13px;font-weight:600;flex:1}
+  .bank-st{font-size:11px;font-weight:600;color:var(--green);display:flex;align-items:center;gap:4px}
+
+  /* ---------- content (низ) ---------- */
+  .content{
+    flex:1; display:flex; flex-direction:column;
+    padding:26px 26px calc(20px + env(safe-area-inset-bottom));
+  }
+  .eyebrow{margin-bottom:14px}
+  h1{font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1.08;margin-bottom:12px}
+  h1 em{font-style:normal;color:var(--green)}
+  .desc{font-size:15px;line-height:1.55;color:var(--ink-soft);flex:1}
+
+  .dots{display:flex;gap:7px;justify-content:center;margin:18px 0 20px}
+  .dots span{
+    width:7px;height:7px;border-radius:999px;background:var(--line);
+    transition:all .35s cubic-bezier(.2,.8,.2,1);
+  }
+  .dots span.active{
+    width:26px;
+    background:linear-gradient(90deg,var(--green),var(--orange));
+  }
+
+  .cta{
+    display:flex;align-items:center;justify-content:center;gap:12px;
+    width:100%;background:var(--green);color:#fff;border:none;cursor:pointer;
+    font-family:inherit;font-size:16px;font-weight:700;
+    padding:18px;border-radius:999px;
+    box-shadow:0 14px 28px -12px rgba(30,74,54,.5);
+    transition:.2s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cta:active{transform:scale(.98);background:var(--green-deep)}
+  .cta .arr{width:24px;height:24px;border-radius:50%;background:var(--orange);
+    display:grid;place-items:center;font-size:12px}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="phone">
+
+  <!-- ================= SCENE ================= -->
+  <div class="scene" id="scene">
+    <div class="statusbar"><span>18:53</span><span>••• ▮</span></div>
+    <a class="skip" href="#">Пропустить</a>
+    <div class="orb" id="orb"></div>
+    <svg class="grain" width="100%" height="100%">
+      <filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2"/></filter>
+      <rect width="100%" height="100%" filter="url(#n)"/>
+    </svg>
+    <svg class="rings" viewBox="0 0 390 456" preserveAspectRatio="xMidYMid slice">
+      <circle cx="195" cy="230" r="110"/><circle cx="195" cy="230" r="160"/><circle cx="195" cy="230" r="215"/>
+    </svg>
+
+    <!-- STEP 0: расчёт налога -->
+    <div class="cards" data-group="0">
+      <div class="fcard" style="left:6%;top:24%;width:70%;--d:.05s">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div>
+            <div class="label">Налог к уплате</div>
+            <div class="big">41 200 ₽</div>
+          </div>
+          <span class="chip green"><span class="dot"></span>УСН 6%</span>
+        </div>
+        <div class="progress"><i></i></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--ink-soft)">
+          <span>Уплачено 26 400 ₽</span><span>до 28 апр</span>
+        </div>
+      </div>
+      <div class="fcard" style="right:6%;bottom:12%;--d:.2s;padding:10px 14px">
+        <span class="chip orange">↗ +241 000 ₽ за квартал</span>
+      </div>
+    </div>
+
+    <!-- STEP 1: советы ИИ -->
+    <div class="cards" data-group="1">
+      <div class="fcard" style="left:6%;top:24%;width:76%;--d:.05s">
+        <div class="ai-row">
+          <div class="ai-ic">✦</div>
+          <div>
+            <div class="label" style="margin-bottom:3px">Совет от ИИ</div>
+            <div class="ai-txt">Уплатите страховые взносы до конца марта — налог уменьшится на <b>12 300 ₽</b>.</div>
+          </div>
+        </div>
+      </div>
+      <div class="fcard" style="right:8%;bottom:12%;--d:.2s;padding:10px 14px">
+        <span class="chip orange"><span class="dot"></span>Риск: доход близок к лимиту НПД</span>
+      </div>
+    </div>
+
+    <!-- STEP 2: импорт из банков -->
+    <div class="cards" data-group="2">
+      <div class="fcard" style="left:6%;top:22%;width:64%;--d:.05s">
+        <div class="label" style="margin-bottom:4px">Подключённые банки</div>
+        <div class="bank-row">
+          <div class="bank-ic" style="background:#FFDD2D;color:#1C2B23">Т</div>
+          <div class="bank-name">Т-Банк</div>
+          <div class="bank-st"><span class="dot" style="background:var(--green)"></span>Подключён</div>
+        </div>
+        <div class="bank-row">
+          <div class="bank-ic" style="background:#21A038">С</div>
+          <div class="bank-name">Сбер</div>
+          <div class="bank-st"><span class="dot" style="background:var(--green)"></span>Подключён</div>
+        </div>
+      </div>
+      <div class="fcard" style="right:6%;bottom:11%;--d:.22s;padding:10px 14px">
+        <span class="chip glass"><span class="dot" style="background:var(--orange)"></span>132 операции — без ручного ввода</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CONTENT ================= -->
+  <div class="content">
+    <div class="eyebrow"><span class="chip green" id="eyebrow"><span class="dot"></span>Автоматический расчёт</span></div>
+    <h1 id="title">Считаем налог <em>за вас</em></h1>
+    <p class="desc" id="desc">Загружаем выписку из банка и сами вычисляем налог по вашей системе — УСН, НПД, ОСНО и другим.</p>
+    <div class="dots" id="dots"><span class="active"></span><span></span><span></span></div>
+    <button class="cta" id="cta">Далее <span class="arr">→</span></button>
+  </div>
+</div>
+
+<script>
+  const DATA = [
+    {chip:'Автоматический расчёт', chipCls:'chip green',
+     title:'Считаем налог <em>за вас</em>',
+     desc:'Загружаем выписку из банка и сами вычисляем налог по вашей системе — УСН, НПД, ОСНО и другим.'},
+    {chip:'Искусственный интеллект', chipCls:'chip orange',
+     title:'Без <em>бухгалтерии</em>',
+     desc:'ИИ классифицирует каждую операцию, даёт советы по оптимизации и предупреждает о рисках.'},
+    {chip:'Банковские интеграции', chipCls:'chip green',
+     title:'Автоимпорт <em>операций</em>',
+     desc:'Подключите свой банк один раз — доходы и расходы будут импортироваться автоматически, каждый день.'},
+  ];
+  const ORB = ['translate(-50%,-50%)','translate(-44%,-54%) scale(1.06)','translate(-56%,-46%) scale(.96)'];
+
+  let cur = 0;
+  const orb = document.getElementById('orb');
+  const groups = [...document.querySelectorAll('.cards')];
+  const dots = [...document.querySelectorAll('#dots span')];
+  const eyebrow = document.getElementById('eyebrow');
+  const title = document.getElementById('title');
+  const desc = document.getElementById('desc');
+  const cta = document.getElementById('cta');
+
+  function show(i){
+    cur = Math.max(0, Math.min(DATA.length-1, i));
+    orb.style.transform = ORB[cur];
+    groups.forEach((g,gi)=>g.querySelectorAll('.fcard')
+      .forEach(c=>c.classList.toggle('show', gi===cur)));
+    dots.forEach((d,di)=>d.classList.toggle('active', di===cur));
+    eyebrow.className = DATA[cur].chipCls;
+    eyebrow.innerHTML = '<span class="dot"></span>'+DATA[cur].chip;
+    title.innerHTML = DATA[cur].title;
+    desc.textContent = DATA[cur].desc;
+    cta.innerHTML = (cur === DATA.length-1 ? 'Начать' : 'Далее') + ' <span class="arr">→</span>';
+  }
+
+  cta.addEventListener('click', ()=> cur === DATA.length-1 ? null : show(cur+1));
+
+  // свайпы (тач + мышь для предпросмотра)
+  let sx = null;
+  const scene = document.getElementById('scene');
+  const start = x => sx = x;
+  const end = x => {
+    if (sx === null) return;
+    const dx = x - sx; sx = null;
+    if (dx < -50) show(cur+1);
+    if (dx >  50) show(cur-1);
+  };
+  scene.addEventListener('touchstart', e=>start(e.touches[0].clientX), {passive:true});
+  scene.addEventListener('touchend',   e=>end(e.changedTouches[0].clientX));
+  scene.addEventListener('mousedown',  e=>start(e.clientX));
+  scene.addEventListener('mouseup',    e=>end(e.clientX));
+  document.addEventListener('keydown', e=>{
+    if(e.key==='ArrowRight') show(cur+1);
+    if(e.key==='ArrowLeft')  show(cur-1);
+  });
+
+  show(0);
+</script>
+</body>
+</html>
